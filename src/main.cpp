@@ -24,6 +24,8 @@
 #include <Wire.h>
 #include <LiquidCrystal_I2C.h>
 #include <DHT.h>
+#include <WiFi.h>
+#include "secrets.h"
 
 #define DHT_PIN 4
 #define DHT_TYPE DHT22
@@ -118,6 +120,32 @@ bool checkAlarm()
   }
 }
 
+void connectWIFI()
+{
+  Serial.print("Connecting to WiFi");
+
+  WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+
+  int attempts = 0;
+
+  while (WiFi.status() != WL_CONNECTED && attempts < 20)
+  {
+    delay(500);
+    Serial.print(".");
+    attempts++;
+  }
+  Serial.println();
+  if (WiFi.status() == WL_CONNECTED)
+  {
+    Serial.print("WiFi connected, IP: ");
+    Serial.println(WiFi.localIP());
+  }
+  else
+  {
+    Serial.println("WiFi connection failed");
+  }
+}
+
 void setup()
 {
   Serial.begin(115200);
@@ -133,6 +161,8 @@ void setup()
 
   digitalWrite(BUZZER_PIN, BUZZER_OFF);
   digitalWrite(LED_PIN, LOW);
+
+  connectWIFI();
 }
 
 void loop()
@@ -147,6 +177,14 @@ void loop()
   }
   else
   {
+    Serial.print("Temperature: ");
+    Serial.print(temperature, 1);
+    Serial.println(" C");
+    Serial.print("Humidity: ");
+    Serial.print(humidity, 1);
+    Serial.println(" %");
+    Serial.println("-----");
+
     bool alarmStatus = checkAlarm();
     if (alarmStatus)
     {
