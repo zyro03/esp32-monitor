@@ -31,15 +31,95 @@
 #define BUZZER_PIN 16
 #define LED_PIN 18
 
+#define BUZZER_ON LOW
+#define BUZZER_OFF HIGH
+
 #define TEMP_MAX 30.0
 #define HUM_MAX 70.0
 
 DHT dht(DHT_PIN, DHT_TYPE);
 LiquidCrystal_I2C lcd(0x27, 16, 2);
 
-int counter = 0;
+float temperature = 0.0;
+float humidity = 0.0;
 
-void setup(){
+void alarmOFF()
+{
+  digitalWrite(LED_PIN, LOW);
+  digitalWrite(BUZZER_PIN, BUZZER_OFF);
+}
+
+void alarmON()
+{
+  digitalWrite(LED_PIN, HIGH);
+  digitalWrite(BUZZER_PIN, BUZZER_ON);
+}
+
+void lcdMeasurements()
+{
+  lcd.setCursor(0, 0);
+  lcd.print("Temp: ");
+  lcd.print(temperature, 1);
+  lcd.print(" C");
+
+  lcd.setCursor(0, 1);
+  lcd.print("Humi: ");
+  lcd.print(humidity, 1);
+  lcd.print(" %");
+}
+
+void lcdSensorError()
+{
+  lcd.setCursor(0, 0);
+  lcd.print("DHT22 ERROR");
+  lcd.setCursor(0, 1);
+  lcd.print("Check sensor");
+}
+
+void lcdAlarm()
+{
+  lcd.setCursor(0, 0);
+  lcd.print("ALARM!!!");
+  lcd.setCursor(0, 1);
+  if (temperature > TEMP_MAX)
+  {
+    lcd.print("HIGH temp!");
+  }
+  else
+  {
+    lcd.print("HIGH humi");
+  }
+}
+
+bool readSensor()
+{
+  temperature = dht.readTemperature();
+  humidity = dht.readHumidity();
+
+  if (isnan(temperature) || isnan(humidity))
+  {
+    return false;
+  }
+  else
+  {
+    return true;
+  }
+}
+
+bool checkAlarm()
+{
+  if (temperature > TEMP_MAX || humidity > HUM_MAX)
+  {
+    return true;
+  }
+  else
+  {
+    return false;
+  }
+}
+
+void setup()
+{
   Serial.begin(115200);
   delay(1000);
   Wire.begin(21, 22);
@@ -47,66 +127,37 @@ void setup(){
   lcd.backlight();
   lcd.clear();
   dht.begin();
-  
+
   pinMode(BUZZER_PIN, OUTPUT);
   pinMode(LED_PIN, OUTPUT);
 
-  digitalWrite(BUZZER_PIN, HIGH);
+  digitalWrite(BUZZER_PIN, BUZZER_OFF);
   digitalWrite(LED_PIN, LOW);
 }
 
-void loop(){
-  counter++;
-  float temperature = dht.readTemperature();
-  float humidity = dht.readHumidity();
+void loop()
+{
   lcd.clear();
-  
-  if (isnan(temperature) || isnan(humidity)){
-    digitalWrite(LED_PIN, LOW);
-    digitalWrite(BUZZER_PIN, HIGH);
-    Serial.println("DHT22 ERROR");
-    lcd.setCursor(0,0);
-    lcd.print("DHT22 ERROR");
+  bool sensorStatus = readSensor();
+
+  if (!sensorStatus)
+  {
+    alarmOFF();
+    lcdSensorError();
   }
-  else{
-    Serial.print("Temperature: ");
-    Serial.print(temperature);
-    Serial.println(" C");
-
-    Serial.print("Humidity: ");
-    Serial.print(humidity);
-    Serial.println(" %");
-
-    lcd.setCursor(0, 0);
-    lcd.print("Temp: ");
-    lcd.print(temperature, 1);
-    lcd.print(" C");
-
-    lcd.setCursor(0, 1);
-    lcd.print("Humi: ");
-    lcd.print(humidity, 1);
-    lcd.print(" %");
-
-    bool alarm = false;
-    if(temperature > TEMP_MAX || humidity > HUM_MAX){
-      alarm = true;}
-      
-    if (alarm){
-      digitalWrite(LED_PIN, HIGH);
-      digitalWrite(BUZZER_PIN, LOW);
-      Serial.println("ALARM");
-      lcd.clear();
-      lcd.setCursor(0,0);
-      lcd.print("ALARM");
-      lcd.setCursor(0,1);
-      if(temperature > TEMP_MAX){
-        lcd.print("High temp");}
-        else{
-          lcd.print("High humi");}}
-    else {
-      digitalWrite(LED_PIN, LOW);
-      digitalWrite(BUZZER_PIN, HIGH);
-      }
+  else
+  {
+    bool alarmStatus = checkAlarm();
+    if (alarmStatus)
+    {
+      alarmON();
+      lcdAlarm();
+    }
+    else
+    {
+      alarmOFF();
+      lcdMeasurements();
+    }
   }
   delay(2000);
 }
