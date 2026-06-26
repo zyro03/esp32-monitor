@@ -146,6 +146,15 @@ void connectWIFI()
   }
 }
 
+void checkWIFI()
+{
+  if (WiFi.status() != WL_CONNECTED)
+  {
+    Serial.println("WI-Fi disconnected");
+    connectWIFI();
+  }
+}
+
 void setup()
 {
   Serial.begin(115200);
@@ -167,6 +176,7 @@ void setup()
 
 void loop()
 {
+  checkWIFI();
   lcd.clear();
   bool sensorStatus = readSensor();
 
@@ -197,5 +207,5 @@ void loop()
       lcdMeasurements();
     }
   }
-  delay(2000);
+  delay(3000);
 }
