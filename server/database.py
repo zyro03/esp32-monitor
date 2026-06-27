@@ -28,3 +28,15 @@ def save_measurement(device, temperature,humidity, alarm):
         (device, temperature, humidity, int(alarm)))
     connection.commit()
     connection.close()
+
+def get_latest_measurements():
+    connection = sqlite3.connect(DATABASE_NAME)
+    sql = """
+        SELECT id, device, temperature, humidity, alarm, created_at
+        FROM measurements
+        ORDER BY id DESC
+        LIMIT 20
+    """
+    measurements = connection.execute(sql).fetchall()
+    connection.close()
+    return measurements
