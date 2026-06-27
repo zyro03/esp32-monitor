@@ -27,6 +27,7 @@
 #include <WiFi.h>
 #include "secrets.h"
 #include <PubSubClient.h>
+#include <ArduinoJson.h>
 
 #define DHT_PIN 4
 #define DHT_TYPE DHT22
@@ -39,6 +40,8 @@
 
 #define TEMP_MAX 30.0
 #define HUM_MAX 70.0
+
+#define MQTT_TOPIC_DATA "esp32/data"
 
 DHT dht(DHT_PIN, DHT_TYPE);
 LiquidCrystal_I2C lcd(0x27, 16, 2);
@@ -185,6 +188,23 @@ void connectMQTT()
   }
 }
 
+void publishMeasurements(bool alarmStatus)
+{
+  if (!mqttClient.connected())
+  {
+    return;
+  }
+  StaticJsonDocument<128> doc;
+  doc["temperature"] = temperature;
+  doc["humidity"] = humidity;
+  doc["alarm"] = alarmStatus;
+  char payload[128];
+  serializeJson(doc, payload);
+  mqttClient.publish(MQTT_TOPIC_DATA, payload);
+  Serial.print("MQTT data sent: ");
+  Serial.println(payload);
+}
+
 void setup()
 {
   Serial.begin(115200);
@@ -231,6 +251,7 @@ void loop()
     Serial.println("-----");
 
     bool alarmStatus = checkAlarm();
+    publishMeasurements(alarmStatus);
     if (alarmStatus)
     {
       alarmON();
