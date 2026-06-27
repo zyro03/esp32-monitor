@@ -7,3 +7,4 @@ include/secrets.h
 server/venv/
 __pycache__/
 *.pyc
+server/measurements.db
