@@ -41,7 +41,9 @@
 #define TEMP_MAX 30.0
 #define HUM_MAX 70.0
 
-#define MQTT_TOPIC_DATA "esp32/data"
+#define MQTT_TOPIC_DATA "esp32/nr1/data"
+#define MQTT_TOPIC_STATUS "esp32/nr1/status"
+#define MQTT_TOPIC_ALARM "esp32/nr1/alarm"
 
 DHT dht(DHT_PIN, DHT_TYPE);
 LiquidCrystal_I2C lcd(0x27, 16, 2);
@@ -173,7 +175,8 @@ void connectMQTT()
       Serial.println();
       Serial.println("MQTT connected");
       delay(3000);
-      mqttClient.publish("esp32/test", "test");
+      mqttClient.publish(MQTT_TOPIC_STATUS, "online");
+      Serial.println("MQTT status sent");
     }
     else
     {
@@ -203,6 +206,22 @@ void publishMeasurements(bool alarmStatus)
   mqttClient.publish(MQTT_TOPIC_DATA, payload);
   Serial.print("MQTT data sent: ");
   Serial.println(payload);
+}
+
+void publishAlarm(bool alarmStatus)
+{
+  if (!mqttClient.connected())
+  {
+    return;
+  }
+  if (alarmStatus)
+  {
+    mqttClient.publish(MQTT_TOPIC_ALARM, "active");
+  }
+  else
+  {
+    mqttClient.publish(MQTT_TOPIC_ALARM, "inactive");
+  }
 }
 
 void setup()
@@ -252,6 +271,7 @@ void loop()
 
     bool alarmStatus = checkAlarm();
     publishMeasurements(alarmStatus);
+    publishAlarm(alarmStatus);
     if (alarmStatus)
     {
       alarmON();
