@@ -18,3 +18,13 @@ def init_database():
 
     connection.commit()
     connection.close()
+
+def save_measurement(device, temperature,humidity, alarm):
+    connection = sqlite3.connect(DATABASE_NAME)
+    connection.execute("""
+        INSERT INTO measurements (device, temperature, humidity, alarm)
+        VALUES (?, ?, ?, ?)
+        """,
+        (device, temperature, humidity, int(alarm)))
+    connection.commit()
+    connection.close()
