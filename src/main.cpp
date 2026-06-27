@@ -26,6 +26,7 @@
 #include <DHT.h>
 #include <WiFi.h>
 #include "secrets.h"
+#include <PubSubClient.h>
 
 #define DHT_PIN 4
 #define DHT_TYPE DHT22
@@ -41,6 +42,8 @@
 
 DHT dht(DHT_PIN, DHT_TYPE);
 LiquidCrystal_I2C lcd(0x27, 16, 2);
+WiFiClient espClient;
+PubSubClient mqttClient(espClient);
 
 float temperature = 0.0;
 float humidity = 0.0;
@@ -155,6 +158,33 @@ void checkWIFI()
   }
 }
 
+void connectMQTT()
+{
+  mqttClient.setServer(MQTT_SERVER, MQTT_PORT);
+  Serial.print("Connecting to MQTT");
+  int attempts = 0;
+  while (!mqttClient.connected() && attempts < 10)
+  {
+    if (mqttClient.connect("esp32"))
+    {
+      Serial.println();
+      Serial.println("MQTT connected");
+      delay(3000);
+      mqttClient.publish("esp32/test", "test");
+    }
+    else
+    {
+      Serial.print(".");
+      delay(1000);
+      attempts++;
+    }
+  }
+  if (!mqttClient.connected())
+  {
+    Serial.println("MQTT connection failed");
+  }
+}
+
 void setup()
 {
   Serial.begin(115200);
@@ -172,10 +202,15 @@ void setup()
   digitalWrite(LED_PIN, LOW);
 
   connectWIFI();
+  connectMQTT();
 }
 
 void loop()
 {
+  if (mqttClient.connected())
+  {
+    mqttClient.loop();
+  }
   checkWIFI();
   lcd.clear();
   bool sensorStatus = readSensor();
