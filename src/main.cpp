@@ -41,9 +41,12 @@
 #define TEMP_MAX 30.0
 #define HUM_MAX 70.0
 
-#define MQTT_TOPIC_DATA "esp32/nr1/data"
-#define MQTT_TOPIC_STATUS "esp32/nr1/status"
-#define MQTT_TOPIC_ALARM "esp32/nr1/alarm"
+#define DEVICE_ID "nr1"
+#define MQTT_CLIENT_ID "esp32_nr1"
+
+#define MQTT_TOPIC_DATA "esp32/" DEVICE_ID "/data"
+#define MQTT_TOPIC_STATUS "esp32/" DEVICE_ID "/status"
+#define MQTT_TOPIC_ALARM "esp32/" DEVICE_ID "/alarm"
 
 DHT dht(DHT_PIN, DHT_TYPE);
 LiquidCrystal_I2C lcd(0x27, 16, 2);
@@ -170,7 +173,7 @@ void connectMQTT()
   int attempts = 0;
   while (!mqttClient.connected() && attempts < 10)
   {
-    if (mqttClient.connect("esp32"))
+    if (mqttClient.connect(MQTT_CLIENT_ID))
     {
       Serial.println();
       Serial.println("MQTT connected");
@@ -198,6 +201,7 @@ void publishMeasurements(bool alarmStatus)
     return;
   }
   StaticJsonDocument<128> doc;
+  doc["device"] = DEVICE_ID;
   doc["temperature"] = temperature;
   doc["humidity"] = humidity;
   doc["alarm"] = alarmStatus;
