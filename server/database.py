@@ -35,7 +35,7 @@ def get_latest_measurements():
         SELECT id, device, temperature, humidity, alarm, created_at
         FROM measurements
         ORDER BY id DESC
-        LIMIT 20
+        LIMIT 100
     """
     measurements = connection.execute(sql).fetchall()
     connection.close()

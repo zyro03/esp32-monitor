@@ -6,7 +6,6 @@ from database import init_database, save_measurement
 MQTT_BROKER = "192.168.0.167"
 MQTT_TOPIC = "esp32/nr1/data"
 
-
 def handle_message(client, userdata, message):
     data = json.loads(message.payload.decode("utf-8"))
 
