@@ -1,5 +1,6 @@
 from flask import Flask, request, redirect
-
+import json
+import paho.mqtt.client as mqtt
 from database import (
     init_database,
     get_latest_measurements,
@@ -7,8 +8,18 @@ from database import (
     get_settings,
     update_settings,
 )
+MQTT_BROKER = "192.168.0.167"
+MQTT_CONFIG_TOPIC = "esp32/nr1/config"
 
 app = Flask(__name__)
+
+def publish_config(temp_max, hum_max):
+    payload = {"temp_max": temp_max, "hum_max": hum_max}
+    client = mqtt.Client()
+    client.connect(MQTT_BROKER, 1883)
+    client.publish(MQTT_CONFIG_TOPIC, json.dumps(payload))
+    client.disconnect()
+    print("Config sent:", payload)
 
 
 @app.route("/")
@@ -85,6 +96,7 @@ def settings():
     temp_max = float(request.form["temp_max"])
     hum_max = float(request.form["hum_max"])
     update_settings(temp_max, hum_max)
+    publish_config(temp_max, hum_max)
     return redirect("/")
 
 if __name__ == "__main__":

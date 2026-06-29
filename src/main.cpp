@@ -16,15 +16,13 @@
 #define BUZZER_ON LOW
 #define BUZZER_OFF HIGH
 
-#define TEMP_MAX 30.0
-#define HUM_MAX 70.0
-
 #define DEVICE_ID "nr1"
 #define MQTT_CLIENT_ID "esp32_nr1"
 
 #define MQTT_TOPIC_DATA "esp32/" DEVICE_ID "/data"
 #define MQTT_TOPIC_STATUS "esp32/" DEVICE_ID "/status"
 #define MQTT_TOPIC_ALARM "esp32/" DEVICE_ID "/alarm"
+#define MQTT_TOPIC_CONFIG "esp32/" DEVICE_ID "/config"
 
 DHT dht(DHT_PIN, DHT_TYPE);
 LiquidCrystal_I2C lcd(0x27, 16, 2);
@@ -33,6 +31,9 @@ PubSubClient mqttClient(espClient);
 
 float temperature = 0.0;
 float humidity = 0.0;
+
+float tempMax = 30.0;
+float humMax = 70.0;
 
 void alarmOFF()
 {
@@ -72,7 +73,7 @@ void lcdAlarm()
   lcd.setCursor(0, 0);
   lcd.print("ALARM!!!");
   lcd.setCursor(0, 1);
-  if (temperature > TEMP_MAX)
+  if (temperature > tempMax)
   {
     lcd.print("HIGH temp!");
   }
@@ -99,7 +100,7 @@ bool readSensor()
 
 bool checkAlarm()
 {
-  if (temperature > TEMP_MAX || humidity > HUM_MAX)
+  if (temperature > tempMax || humidity > humMax)
   {
     return true;
   }
@@ -157,6 +158,7 @@ void connectMQTT()
       Serial.println("MQTT connected");
       delay(3000);
       mqttClient.publish(MQTT_TOPIC_STATUS, "online");
+      mqttClient.subscribe(MQTT_TOPIC_CONFIG);
       Serial.println("MQTT status sent");
     }
     else
@@ -206,6 +208,23 @@ void publishAlarm(bool alarmStatus)
   }
 }
 
+void handleMqttMessage(char *topic, byte *payload, unsigned int length)
+{
+  if (String(topic) != MQTT_TOPIC_CONFIG)
+  {
+    return;
+  }
+  StaticJsonDocument<128> doc;
+  if (deserializeJson(doc, payload, length))
+  {
+    Serial.println("fault");
+    return;
+  }
+  tempMax = doc["temp_max"];
+  humMax = doc["hum_max"];
+  Serial.println("new config rec");
+}
+
 void setup()
 {
   Serial.begin(115200);
@@ -223,6 +242,7 @@ void setup()
   digitalWrite(LED_PIN, LOW);
 
   connectWIFI();
+  mqttClient.setCallback(handleMqttMessage);
   connectMQTT();
 }
 
