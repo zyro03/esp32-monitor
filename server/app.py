@@ -1,6 +1,12 @@
-from flask import Flask
+from flask import Flask, request, redirect
 
-from database import init_database, get_latest_measurements, get_latest_alarm_events
+from database import (
+    init_database,
+    get_latest_measurements,
+    get_latest_alarm_events,
+    get_settings,
+    update_settings,
+)
 
 app = Flask(__name__)
 
@@ -9,9 +15,20 @@ app = Flask(__name__)
 def index():
     measurements = get_latest_measurements()
     alarm_events = get_latest_alarm_events()
-    page = """
+    settings = get_settings()
+    page = f"""
+    <meta http-equiv="refresh" content="5">
     <h1>ESP32 measurements</h1>
-    
+    <h2> Alarm settings</h2>
+    <form method = "POST" action="/settings">
+        <label>MAX temperature:</label>
+        <input type="number" step="0.1" name="temp_max" value="{settings['temp_max']}">
+        <br><br>
+        <label>MAX humidity:</label>
+        <input type="number" step="0.1" name="hum_max" value="{settings['hum_max']}">
+        <button type="submit">Save settings</button>
+    </form>
+    <h2>Latest measurements</h2>
     <table border="1">
         <tr>
             <th>ID</th>
@@ -20,6 +37,7 @@ def index():
             <th>Humidity</th>
             <th>Alarm</th>
             <th>Time</th>
+        </tr>
     """
     for row in measurements:
         page += f"""
@@ -35,7 +53,7 @@ def index():
     page += """</table>"""    
 
     page += """
-    <h1>Alarm events</h2>
+    <h2>Alarm events</h2>
     <table border="1">
         <tr>
             <th>ID</th>
@@ -60,6 +78,14 @@ def index():
     page += """</table>"""
     return page
 
+
+@app.route("/settings", methods=["POST"])
+
+def settings():
+    temp_max = float(request.form["temp_max"])
+    hum_max = float(request.form["hum_max"])
+    update_settings(temp_max, hum_max)
+    return redirect("/")
 
 if __name__ == "__main__":
     init_database()

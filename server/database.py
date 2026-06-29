@@ -26,6 +26,20 @@ def init_database():
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     """)   
+    
+    connection.execute("""
+    CREATE TABLE IF NOT EXISTS settings (
+        name TEXT PRIMARY KEY,
+        value REAL NOT NULL
+    )
+    """)
+
+    connection.execute("""
+    INSERT OR IGNORE INTO settings (name, value)
+    VALUES 
+        ('temp_max', 30.0),
+        ('hum_max', 70.0)
+    """)
 
     connection.commit()
     connection.close()
@@ -74,3 +88,23 @@ def get_latest_measurements():
     measurements = connection.execute(sql).fetchall()
     connection.close()
     return measurements
+
+def get_settings():
+    connection = sqlite3.connect(DATABASE_NAME)
+    rows = connection.execute("""
+        SELECT name, value FROM settings
+    """).fetchall()
+    connection.close()
+    settings = {}
+    for row in rows:
+        settings[row[0]]=row[1]
+    return settings
+
+def update_settings(temp_max, hum_max):
+    connection = sqlite3.connect(DATABASE_NAME)
+    connection.execute("""
+    UPDATE settings SET value = ? WHERE name = 'temp_max' """, [temp_max])
+    connection.execute("""
+    UPDATE settings SET value = ? WHERE name = 'hum_max' """, [hum_max])
+    connection.commit()
+    connection.close()
