@@ -9,23 +9,33 @@ app = Flask(__name__)
 def index():
     measurements = get_latest_measurements()
 
-    page = "<h1>ESP32 measurements</h1>"
-
+    page = """
+    <h1>ESP32 measurements</h1>
+    
+    <table border="1">
+        <tr>
+            <th>ID</th>
+            <th>Device</th>
+            <th>Temperature</th>
+            <th>Humidity</th>
+            <th>Alarm</th>
+            <th>Time</th>
+    """
     for row in measurements:
         page += f"""
-        <p>
-            ID: {row[0]} |
-            Device: {row[1]} |
-            Temperature: {row[2]} C |
-            Humidity: {row[3]} % |
-            Alarm: {row[4]} |
-            Time: {row[5]}
-        </p>
+        <tr>
+            <td>{row[0]}</td>
+            <td>{row[1]}</td>
+            <td>{row[2]}</td>
+            <td>{row[3]}</td>
+            <td>{row[4]}</td>
+            <td>{row[5]}</td>
+        </tr>
         """
-
+    page += """</table>"""    
     return page
 
 
 if __name__ == "__main__":
     init_database()
-    app.run(debug=True)
+    app.run(debug=True, port=5001)
