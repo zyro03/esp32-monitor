@@ -37,6 +37,7 @@ def index():
         <br><br>
         <label>MAX humidity:</label>
         <input type="number" step="0.1" name="hum_max" value="{settings['hum_max']}">
+        <br><br>
         <button type="submit">Save settings</button>
     </form>
     <h2>Latest measurements</h2>
@@ -91,7 +92,6 @@ def index():
 
 
 @app.route("/settings", methods=["POST"])
-
 def settings():
     temp_max = float(request.form["temp_max"])
     hum_max = float(request.form["hum_max"])

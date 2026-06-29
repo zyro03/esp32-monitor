@@ -1,6 +1,5 @@
 import json
 import paho.mqtt.client as mqtt
-
 from database import init_database, save_measurement, save_alarm_event
 
 MQTT_BROKER = "192.168.0.167"
