@@ -1,6 +1,6 @@
 from flask import Flask
 
-from database import init_database, get_latest_measurements
+from database import init_database, get_latest_measurements, get_latest_alarm_events
 
 app = Flask(__name__)
 
@@ -8,7 +8,7 @@ app = Flask(__name__)
 @app.route("/")
 def index():
     measurements = get_latest_measurements()
-
+    alarm_events = get_latest_alarm_events()
     page = """
     <h1>ESP32 measurements</h1>
     
@@ -33,6 +33,31 @@ def index():
         </tr>
         """
     page += """</table>"""    
+
+    page += """
+    <h1>Alarm events</h2>
+    <table border="1">
+        <tr>
+            <th>ID</th>
+            <th>Device</th>
+            <th>Temperature</th>
+            <th>Humidity</th>
+            <th>Reason</th>
+            <th>Time</th>
+        </tr>
+    """
+    for row in alarm_events:
+        page += f"""
+        <tr>
+            <td>{row[0]}</td>
+            <td>{row[1]}</td>
+            <td>{row[2]}</td>
+            <td>{row[3]}</td>
+            <td>{row[4]}</td>
+            <td>{row[5]}</td>
+        </tr>
+        """
+    page += """</table>"""
     return page
 
 
