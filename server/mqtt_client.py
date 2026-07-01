@@ -1,28 +1,36 @@
 import json
 import paho.mqtt.client as mqtt
-from database import init_database, save_measurement, save_alarm_event
-from config import MQTT_BROKER, MQTT_PORT, MQTT_TOPIC_DATA
+from database import init_database, save_measurement, save_alarm_event, save_system_event
+from config import MQTT_BROKER, MQTT_PORT, MQTT_TOPIC_DATA, MQTT_TOPIC_EVENT
 
 def handle_message(client, userdata, message):
+    topic = message.topic
     data = json.loads(message.payload.decode("utf-8"))
-
-    save_measurement(
-        data["device"],
-        data["temperature"],
-        data["humidity"],
-        data["alarm"]
-    )
-    if data["alarm"]:
-        reason = "High temperature or humidity"
-        save_alarm_event(
+    if topic == MQTT_TOPIC_DATA:
+        save_measurement(
             data["device"],
             data["temperature"],
             data["humidity"],
-            reason
+            data["alarm"]
         )
-        print("Alarm event saved")
-    print("Saved:", data)
+        if data["alarm"]:
+            reason = "High temperature or humidity"
 
+            save_alarm_event(
+                data["device"],
+                data["temperature"],
+                data["humidity"],
+                reason
+            )
+            print("Alarm event saved")
+        print("Saved measurement:", data)
+    elif topic == MQTT_TOPIC_EVENT:
+        save_system_event(
+            data["device"],
+            data["event_type"],
+            data.get("message", "")
+        )
+        print("Saved system event:", data)
 init_database()
 
 client = mqtt.Client()
@@ -30,7 +38,10 @@ client.on_message = handle_message
 
 client.connect(MQTT_BROKER, MQTT_PORT)
 client.subscribe(MQTT_TOPIC_DATA)
+client.subscribe(MQTT_TOPIC_EVENT)
 
 print("MQTT client started")
+print("Subscribed:", MQTT_TOPIC_DATA)
+print("Subscribed:", MQTT_TOPIC_EVENT)
 
 client.loop_forever()

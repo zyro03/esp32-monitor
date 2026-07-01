@@ -23,6 +23,7 @@
 #define MQTT_TOPIC_STATUS "esp32/" DEVICE_ID "/status"
 #define MQTT_TOPIC_ALARM "esp32/" DEVICE_ID "/alarm"
 #define MQTT_TOPIC_CONFIG "esp32/" DEVICE_ID "/config"
+#define MQTT_TOPIC_EVENT "esp32/" DEVICE_ID "/event"
 
 DHT dht(DHT_PIN, DHT_TYPE);
 LiquidCrystal_I2C lcd(0x27, 16, 2);
@@ -145,7 +146,21 @@ void checkWIFI()
   connectWIFI();
 }
 
-
+void publishSystemEvent(const char *eventType, const char *message)
+{
+  if (!mqttClient.connected())
+  {
+    return;
+  }
+  JsonDocument doc;
+  doc["device"] = DEVICE_ID;
+  doc["event_type"] = eventType;
+  doc["message"] = message;
+  char payload[160];
+  serializeJson(doc, payload);
+  mqttClient.publish(MQTT_TOPIC_EVENT, payload);
+  Serial.print("MQTT event sent: ");
+  Serial.println(payload);}
 
 void connectMQTT()
 {
@@ -161,6 +176,7 @@ void connectMQTT()
       mqttClient.publish(MQTT_TOPIC_STATUS, "online");
       mqttClient.subscribe(MQTT_TOPIC_CONFIG);
       Serial.println("MQTT status sent and topic subscribed");
+      publishSystemEvent("MQTT_CONNECTED", "MQTT connection");
     }
     else
     {
@@ -237,6 +253,8 @@ void handleMqttMessage(char *topic, byte *payload, unsigned int length)
   Serial.println("new config rec");
 }
 
+
+
 void setup()
 {
   Serial.begin(115200);
@@ -275,6 +293,9 @@ void loop()
   {
     alarmOFF();
     lcdSensorError();
+    if(mqttClient.connected()){
+      publishSystemEvent("SENSOR_ERROR", "DHT22 read failed");
+    }
   }
   else
   {

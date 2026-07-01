@@ -26,7 +26,17 @@ def init_database():
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     """)   
-    
+
+    connection.execute("""
+        CREATE TABLE IF NOT EXISTS system_events (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            device TEXT NOT NULL,
+            event_type TEXT NOT NULL,
+            message TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+
     connection.execute("""
     CREATE TABLE IF NOT EXISTS settings (
         name TEXT PRIMARY KEY,
@@ -106,5 +116,14 @@ def update_settings(temp_max, hum_max):
     UPDATE settings SET value = ? WHERE name = 'temp_max' """, [temp_max])
     connection.execute("""
     UPDATE settings SET value = ? WHERE name = 'hum_max' """, [hum_max])
+    connection.commit()
+    connection.close()
+
+def save_system_event(device, event_type, message):
+    connection = sqlite3.connect(DATABASE_NAME)
+    connection.execute("""
+        INSERT INTO system_events (device, event_type, message)
+        VALUES (?, ?, ?)
+    """, [device, event_type, message])
     connection.commit()
     connection.close()
