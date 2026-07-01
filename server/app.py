@@ -1,4 +1,5 @@
 from flask import Flask, request, redirect
+from html import escape
 import json
 import paho.mqtt.client as mqtt
 from database import (
@@ -8,7 +9,7 @@ from database import (
     get_settings,
     update_settings,
 )
-MQTT_BROKER = "192.168.0.167"
+MQTT_BROKER = "172.20.10.2"
 MQTT_CONFIG_TOPIC = "esp32/nr1/config"
 
 app = Flask(__name__)
