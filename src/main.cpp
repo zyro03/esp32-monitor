@@ -124,10 +124,9 @@ void connectWIFI()
     Serial.print(".");
     attempts++;
   }
-  Serial.println();
   if (WiFi.status() == WL_CONNECTED)
   {
-    Serial.print("WiFi connected, IP: ");
+    Serial.print("WiFi connected, ESP32 IP: ");
     Serial.println(WiFi.localIP());
   }
   else
@@ -138,34 +137,37 @@ void connectWIFI()
 
 void checkWIFI()
 {
-  if (WiFi.status() != WL_CONNECTED)
+  if (WiFi.status() == WL_CONNECTED)
   {
-    Serial.println("WI-Fi disconnected");
-    connectWIFI();
+    return;
   }
+  Serial.println("WI-Fi disconnected");
+  connectWIFI();
 }
+
+
 
 void connectMQTT()
 {
   mqttClient.setServer(MQTT_SERVER, MQTT_PORT);
-  Serial.print("Connecting to MQTT");
   int attempts = 0;
-  while (!mqttClient.connected() && attempts < 10)
+  while (!mqttClient.connected() && attempts < 5)
   {
+    Serial.print("Connecting to MQTT");
     if (mqttClient.connect(MQTT_CLIENT_ID))
     {
-      Serial.println();
       Serial.println("MQTT connected");
-      delay(3000);
+      
       mqttClient.publish(MQTT_TOPIC_STATUS, "online");
       mqttClient.subscribe(MQTT_TOPIC_CONFIG);
-      Serial.println("MQTT status sent");
+      Serial.println("MQTT status sent and topic subscribed");
     }
     else
     {
-      Serial.print(".");
-      delay(1000);
+      Serial.print("failed, ");
+      Serial.println(mqttClient.state());
       attempts++;
+      delay(2000);
     }
   }
   if (!mqttClient.connected())
@@ -174,13 +176,23 @@ void connectMQTT()
   }
 }
 
+void checkMQTT()
+{
+  if (mqttClient.connected())
+  {
+    return;
+  }
+  Serial.println("MQTT disconnected");
+  connectMQTT();
+}
+
 void publishMeasurements(bool alarmStatus)
 {
   if (!mqttClient.connected())
   {
     return;
   }
-  StaticJsonDocument<128> doc;
+  JsonDocument doc;
   doc["device"] = DEVICE_ID;
   doc["temperature"] = temperature;
   doc["humidity"] = humidity;
@@ -214,7 +226,7 @@ void handleMqttMessage(char *topic, byte *payload, unsigned int length)
   {
     return;
   }
-  StaticJsonDocument<128> doc;
+  JsonDocument doc;
   if (deserializeJson(doc, payload, length))
   {
     Serial.println("fault");
@@ -228,7 +240,6 @@ void handleMqttMessage(char *topic, byte *payload, unsigned int length)
 void setup()
 {
   Serial.begin(115200);
-  delay(1000);
   Wire.begin(21, 22);
   lcd.init();
   lcd.backlight();
@@ -243,16 +254,20 @@ void setup()
 
   connectWIFI();
   mqttClient.setCallback(handleMqttMessage);
-  connectMQTT();
+  if (WiFi.status() == WL_CONNECTED){
+    connectMQTT();
+  }
 }
 
 void loop()
 {
-  if (mqttClient.connected())
-  {
+  checkWIFI();
+  if (WiFi.status() == WL_CONNECTED){
+    checkMQTT();
+  }
+  if (mqttClient.connected()){
     mqttClient.loop();
   }
-  checkWIFI();
   lcd.clear();
   bool sensorStatus = readSensor();
 
@@ -272,8 +287,16 @@ void loop()
     Serial.println("-----");
 
     bool alarmStatus = checkAlarm();
+    
+    if(mqttClient.connected()){
     publishMeasurements(alarmStatus);
     publishAlarm(alarmStatus);
+    }
+    else{
+      Serial.println("MQTT not connected, measurement not published");
+    }
+
+
     if (alarmStatus)
     {
       alarmON();
