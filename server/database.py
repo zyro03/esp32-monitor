@@ -51,6 +51,18 @@ def init_database():
         ('hum_max', 70.0)
     """)
 
+    connection.execute("""
+    CREATE TABLE IF NOT EXISTS device_status (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        device TEXT NOT NULL,
+        power_source TEXT NOT NULL,
+        work_mode TEXT NOT NULL,
+        wifi_status INTEGER NOT NULL,
+        mqtt_status INTEGER NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+    """)
+
     connection.commit()
     connection.close()
 
@@ -127,3 +139,22 @@ def save_system_event(device, event_type, message):
     """, [device, event_type, message])
     connection.commit()
     connection.close()
+
+def save_device_status(device, power_source, work_mode, wifi_status, mqtt_status):
+    connection = sqlite3.connect(DATABASE_NAME)
+    connection.execute("""
+        INSERT INTO device_status (device, power_source, work_mode, wifi_status, mqtt_status)
+        VALUES (?, ?, ?, ?, ?)
+    """, [ device, power_source, work_mode, int(wifi_status), int(mqtt_status) ])
+    connection.commit()
+    connection.close()
+
+def get_latest_device_status():
+    connection = sqlite3.connect(DATABASE_NAME)
+    row = connection.execute("""
+        SELECT id, device, power_source, work_mode, wifi_status, mqtt_status, created_at
+        FROM device_status
+        ORDER BY id DESC
+        LIMIT 1 """).fetchone()
+    connection.close()
+    return row

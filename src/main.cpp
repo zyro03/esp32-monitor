@@ -24,6 +24,7 @@
 #define MQTT_TOPIC_ALARM "esp32/" DEVICE_ID "/alarm"
 #define MQTT_TOPIC_CONFIG "esp32/" DEVICE_ID "/config"
 #define MQTT_TOPIC_EVENT "esp32/" DEVICE_ID "/event"
+#define MQTT_TOPIC_DEVICE_STATUS "esp32/" DEVICE_ID "/device_status"
 
 DHT dht(DHT_PIN, DHT_TYPE);
 LiquidCrystal_I2C lcd(0x27, 16, 2);
@@ -35,6 +36,9 @@ float humidity = 0.0;
 
 float tempMax = 30.0;
 float humMax = 70.0;
+
+String powerSource = "main";
+String workMode = "normal";
 
 void alarmOFF()
 {
@@ -136,6 +140,26 @@ void connectWIFI()
   }
 }
 
+void publishDeviceStatus()
+{
+  if (!mqttClient.connected())
+  {
+    return;
+  }
+  JsonDocument doc;
+  doc["device"] = DEVICE_ID;
+  doc["power_source"] = powerSource;
+  doc["work_mode"] = workMode;
+  doc["wifi_status"] = WiFi.status() == WL_CONNECTED;
+  doc["mqtt_status"] = mqttClient.connected();
+  char payload[192];
+  serializeJson(doc, payload);
+  mqttClient.publish(MQTT_TOPIC_DEVICE_STATUS, payload);
+  Serial.print("MQTT device status sent: ");
+  Serial.println(payload);
+}
+
+
 void checkWIFI()
 {
   if (WiFi.status() == WL_CONNECTED)
@@ -177,6 +201,7 @@ void connectMQTT()
       mqttClient.subscribe(MQTT_TOPIC_CONFIG);
       Serial.println("MQTT status sent and topic subscribed");
       publishSystemEvent("MQTT_CONNECTED", "MQTT connection");
+      publishDeviceStatus();
     }
     else
     {
@@ -312,6 +337,7 @@ void loop()
     if(mqttClient.connected()){
     publishMeasurements(alarmStatus);
     publishAlarm(alarmStatus);
+    publishDeviceStatus();
     }
     else{
       Serial.println("MQTT not connected, measurement not published");
