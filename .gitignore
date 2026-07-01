@@ -8,3 +8,6 @@ server/venv/
 __pycache__/
 *.pyc
 server/measurements.db
+server/config.py
+include/secrets.h
+firmware/include/secrets.h

@@ -1,9 +1,7 @@
 import json
 import paho.mqtt.client as mqtt
 from database import init_database, save_measurement, save_alarm_event
-
-MQTT_BROKER = "172.20.10.2"
-MQTT_TOPIC = "esp32/nr1/data"
+from config import MQTT_BROKER, MQTT_PORT, MQTT_TOPIC_DATA
 
 def handle_message(client, userdata, message):
     data = json.loads(message.payload.decode("utf-8"))
@@ -30,8 +28,8 @@ init_database()
 client = mqtt.Client()
 client.on_message = handle_message
 
-client.connect(MQTT_BROKER, 1883)
-client.subscribe(MQTT_TOPIC)
+client.connect(MQTT_BROKER, MQTT_PORT)
+client.subscribe(MQTT_TOPIC_DATA)
 
 print("MQTT client started")
 

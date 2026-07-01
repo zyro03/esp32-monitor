@@ -9,16 +9,15 @@ from database import (
     get_settings,
     update_settings,
 )
-MQTT_BROKER = "172.20.10.2"
-MQTT_CONFIG_TOPIC = "esp32/nr1/config"
+from config import MQTT_BROKER, MQTT_PORT, MQTT_TOPIC_CONFIG
 
 app = Flask(__name__)
 
 def publish_config(temp_max, hum_max):
     payload = {"temp_max": temp_max, "hum_max": hum_max}
     client = mqtt.Client()
-    client.connect(MQTT_BROKER, 1883)
-    client.publish(MQTT_CONFIG_TOPIC, json.dumps(payload))
+    client.connect(MQTT_BROKER, MQTT_PORT)
+    client.publish(MQTT_TOPIC_CONFIG, json.dumps(payload))
     client.disconnect()
     print("Config sent:", payload)
 

@@ -1,2 +1,7 @@
-const char *WIFI_SSID = "your_wifi_name";
-const char *WIFI_PASSWORD = "your_wifi_password";
+#pragma once
+
+const char *WIFI_SSID = "x";
+const char *WIFI_PASSWORD = "x";
+
+const char *MQTT_SERVER = "x";
+const int MQTT_PORT = 1;
