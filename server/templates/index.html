@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="pl">
+  <head>
+    <meta charset="UTF-8" />
+    <title>ESP32 monitoring</title>
+    <meta http-equiv="refresh" content="5" />
+    <link rel="stylesheet" href="/static/style.css" />
+  </head>
+
+  <body>
+    <h1>ESP32 measurements</h1>
+
+    <h2>Alarm settings</h2>
+
+    <form method="POST" action="/settings">
+      <label>Maximum temperature:</label>
+      <input
+        type="number"
+        step="0.1"
+        name="temp_max"
+        value="{{ settings['temp_max'] }}"
+      />
+
+      <br /><br />
+
+      <label>Maximum humidity:</label>
+      <input
+        type="number"
+        step="0.1"
+        name="hum_max"
+        value="{{ settings['hum_max'] }}"
+      />
+
+      <br /><br />
+
+      <button type="submit">Save settings</button>
+    </form>
+
+    <hr />
+
+    <h2>Latest measurements</h2>
+
+    <table>
+      <tr>
+        <th>ID</th>
+        <th>Device</th>
+        <th>Temperature</th>
+        <th>Humidity</th>
+        <th>Alarm</th>
+        <th>Time</th>
+      </tr>
+
+      {% for measurement in measurements %}
+      <tr>
+        <td>{{ measurement[0] }}</td>
+        <td>{{ measurement[1] }}</td>
+        <td>{{ measurement[2] }}</td>
+        <td>{{ measurement[3] }}</td>
+        <td>{{ measurement[4] }}</td>
+        <td>{{ measurement[5] }}</td>
+      </tr>
+      {% endfor %}
+    </table>
+
+    <hr />
+
+    <h2>Alarm events</h2>
+
+    <table>
+      <tr>
+        <th>ID</th>
+        <th>Device</th>
+        <th>Temperature</th>
+        <th>Humidity</th>
+        <th>Reason</th>
+        <th>Time</th>
+      </tr>
+
+      {% for alarm in alarm_events %}
+      <tr>
+        <td>{{ alarm[0] }}</td>
+        <td>{{ alarm[1] }}</td>
+        <td>{{ alarm[2] }}</td>
+        <td>{{ alarm[3] }}</td>
+        <td>{{ alarm[4] }}</td>
+        <td>{{ alarm[5] }}</td>
+      </tr>
+      {% endfor %}
+    </table>
+  </body>
+</html>

@@ -1,11 +1,11 @@
 #include "secrets.h"
 #include <Arduino.h>
-#include <Wire.h>
-#include <LiquidCrystal_I2C.h>
-#include <DHT.h>
-#include <WiFi.h>
-#include <PubSubClient.h>
 #include <ArduinoJson.h>
+#include <DHT.h>
+#include <LiquidCrystal_I2C.h>
+#include <PubSubClient.h>
+#include <WiFi.h>
+#include <Wire.h>
 
 #define DHT_PIN 4
 #define DHT_TYPE DHT22
@@ -24,7 +24,6 @@
 
 #define MQTT_TOPIC_DATA "esp32/" DEVICE_ID "/data"
 #define MQTT_TOPIC_STATUS "esp32/" DEVICE_ID "/status"
-#define MQTT_TOPIC_ALARM "esp32/" DEVICE_ID "/alarm"
 #define MQTT_TOPIC_CONFIG "esp32/" DEVICE_ID "/config"
 #define MQTT_TOPIC_EVENT "esp32/" DEVICE_ID "/event"
 #define MQTT_TOPIC_DEVICE_STATUS "esp32/" DEVICE_ID "/device_status"
@@ -41,7 +40,9 @@ float tempMax = 30.0;
 float humMax = 70.0;
 
 bool lastMainPowerState = true;
+bool statusScreen = false;
 RTC_DATA_ATTR bool wasOnBattery = false;
+RTC_DATA_ATTR bool sensorErrorActive = false;
 
 String powerSource = "main";
 String workMode = "normal";
@@ -71,6 +72,38 @@ void lcdMeasurements()
   lcd.print(" %");
 }
 
+void lcdStatus()
+{
+  lcd.setCursor(0, 0);
+  if (WiFi.status() == WL_CONNECTED)
+  {
+    lcd.print("WiFi:OK");
+  }
+  else
+  {
+    lcd.print("WiFi:OFF");
+  }
+  lcd.setCursor(9, 0);
+  if (mqttClient.connected())
+  {
+    lcd.print("MQ:OK");
+  }
+  else
+  {
+    lcd.print("MQ:OFF");
+  }
+  lcd.setCursor(0, 1);
+  lcd.print("Power: ");
+  if (powerSource == "main")
+  {
+    lcd.print("MAIN");
+  }
+  else
+  {
+    lcd.print("BATTERY");
+  }
+}
+
 void lcdSensorError()
 {
   lcd.setCursor(0, 0);
@@ -82,7 +115,7 @@ void lcdSensorError()
 void lcdAlarm()
 {
   lcd.setCursor(0, 0);
-  lcd.print("ALARM!!!");
+  lcd.print("ALARM!");
   lcd.setCursor(0, 1);
   if (temperature > tempMax)
   {
@@ -90,8 +123,23 @@ void lcdAlarm()
   }
   else
   {
-    lcd.print("HIGH humi");
+    lcd.print("HIGH humi!");
   }
+}
+
+void lcdBatterySleep()
+{
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print("Power: BATTERY");
+  lcd.setCursor(0, 1);
+  lcd.print("T:");
+  lcd.print(temperature, 1);
+  lcd.print("C");
+  lcd.setCursor(9, 1);
+  lcd.print("H:");
+  lcd.print(humidity, 1);
+  lcd.print("%");
 }
 
 bool readSensor()
@@ -199,11 +247,12 @@ void connectMQTT()
   while (!mqttClient.connected() && attempts < 5)
   {
     Serial.print("Connecting to MQTT");
-    if (mqttClient.connect(MQTT_CLIENT_ID))
+    if (mqttClient.connect(MQTT_CLIENT_ID, MQTT_TOPIC_STATUS, 0, true,
+                           "offline"))
     {
       Serial.println("MQTT connected");
 
-      mqttClient.publish(MQTT_TOPIC_STATUS, "online");
+      mqttClient.publish(MQTT_TOPIC_STATUS, "online", true);
       mqttClient.subscribe(MQTT_TOPIC_CONFIG);
       Serial.println("MQTT status sent and topic subscribed");
       publishSystemEvent("MQTT_CONNECTED", "MQTT connection");
@@ -249,22 +298,6 @@ void publishMeasurements(bool alarmStatus)
   mqttClient.publish(MQTT_TOPIC_DATA, payload);
   Serial.print("MQTT data sent: ");
   Serial.println(payload);
-}
-
-void publishAlarm(bool alarmStatus)
-{
-  if (!mqttClient.connected())
-  {
-    return;
-  }
-  if (alarmStatus)
-  {
-    mqttClient.publish(MQTT_TOPIC_ALARM, "active");
-  }
-  else
-  {
-    mqttClient.publish(MQTT_TOPIC_ALARM, "inactive");
-  }
 }
 
 void handleMqttMessage(char *topic, byte *payload, unsigned int length)
@@ -323,23 +356,27 @@ void enterDeepSleep()
   wasOnBattery = true;
   workMode = "deep_sleep";
 
-  publishSystemEvent(
-      "DEEP_SLEEP_ENTER",
-      "ESP32 entering deep sleep");
+  publishSystemEvent("DEEP_SLEEP_ENTER", "ESP32 entering deep sleep");
 
   publishDeviceStatus();
 
-  delay(500);
+  mqttClient.publish(MQTT_TOPIC_STATUS, "offline", true);
+  mqttClient.loop();
+  delay(200);
+  mqttClient.disconnect();
 
   alarmOFF();
+  lcdBatterySleep();
+  delay(1500);
   lcd.clear();
   lcd.noBacklight();
 
-  Serial.println("Entering deep sleep for 30 seconds");
+  Serial.print("Entering deep sleep for ");
+  Serial.print(DEEP_SLEEP_TIME_SECONDS);
+  Serial.println(" seconds");
   Serial.flush();
 
-  esp_sleep_enable_timer_wakeup(
-      DEEP_SLEEP_TIME_SECONDS * 1000000ULL);
+  esp_sleep_enable_timer_wakeup(DEEP_SLEEP_TIME_SECONDS * 1000000ULL);
 
   esp_deep_sleep_start();
 }
@@ -373,13 +410,9 @@ void setup()
   {
     connectMQTT();
   }
-  if (
-      wakeupCause == ESP_SLEEP_WAKEUP_TIMER &&
-      mqttClient.connected())
+  if (wakeupCause == ESP_SLEEP_WAKEUP_TIMER && mqttClient.connected())
   {
-    publishSystemEvent(
-        "WAKE_UP",
-        "ESP32 woke up from deep sleep");
+    publishSystemEvent("WAKE_UP", "ESP32 woke up from deep sleep");
   }
   if (powerSource == "main" && wasOnBattery && mqttClient.connected())
   {
@@ -408,13 +441,19 @@ void loop()
   {
     alarmOFF();
     lcdSensorError();
-    if (mqttClient.connected())
+    if (!sensorErrorActive && mqttClient.connected())
     {
       publishSystemEvent("SENSOR_ERROR", "DHT22 read failed");
     }
+    sensorErrorActive = true;
   }
   else
   {
+    if (sensorErrorActive && mqttClient.connected())
+    {
+      publishSystemEvent("SENSOR_RESTORED", "DHT22 restored");
+    }
+    sensorErrorActive = false;
     Serial.print("Temperature: ");
     Serial.print(temperature, 1);
     Serial.println(" C");
@@ -428,14 +467,12 @@ void loop()
     if (mqttClient.connected())
     {
       publishMeasurements(alarmStatus);
-      publishAlarm(alarmStatus);
       publishDeviceStatus();
     }
     else
     {
       Serial.println("MQTT not connected, measurement not published");
     }
-
     if (alarmStatus)
     {
       alarmON();
@@ -444,7 +481,15 @@ void loop()
     else
     {
       alarmOFF();
-      lcdMeasurements();
+      if (statusScreen)
+      {
+        lcdStatus();
+      }
+      else
+      {
+        lcdMeasurements();
+      }
+      statusScreen = !statusScreen;
     }
   }
   if (powerSource == "battery")
