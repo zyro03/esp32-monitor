@@ -14,6 +14,7 @@
 #define LED_PIN 18
 
 #define POWER_DETECT_PIN 34
+#define DEEP_SLEEP_TIME_SECONDS 30
 
 #define BUZZER_ON LOW
 #define BUZZER_OFF HIGH
@@ -316,9 +317,39 @@ void updatePowerStatus()
   }
 }
 
+void enterDeepSleep()
+{
+  workMode = "deep_sleep";
+
+  publishSystemEvent(
+      "DEEP_SLEEP_ENTER",
+      "ESP32 entering deep sleep");
+
+  publishDeviceStatus();
+
+  delay(500);
+
+  alarmOFF();
+  lcd.clear();
+  lcd.noBacklight();
+
+  Serial.println("Entering deep sleep for 30 seconds");
+  Serial.flush();
+
+  esp_sleep_enable_timer_wakeup(
+      DEEP_SLEEP_TIME_SECONDS * 1000000ULL);
+
+  esp_deep_sleep_start();
+}
+
 void setup()
 {
   Serial.begin(115200);
+  esp_sleep_wakeup_cause_t wakeupCause = esp_sleep_get_wakeup_cause();
+  if (wakeupCause == ESP_SLEEP_WAKEUP_TIMER)
+  {
+    Serial.println("Wake up from deep sleep timer");
+  }
   Wire.begin(21, 22);
   lcd.init();
   lcd.backlight();
@@ -334,10 +365,19 @@ void setup()
   digitalWrite(LED_PIN, LOW);
 
   connectWIFI();
+  updatePowerStatus();
   mqttClient.setCallback(handleMqttMessage);
   if (WiFi.status() == WL_CONNECTED)
   {
     connectMQTT();
+  }
+  if (
+      wakeupCause == ESP_SLEEP_WAKEUP_TIMER &&
+      mqttClient.connected())
+  {
+    publishSystemEvent(
+        "WAKE_UP",
+        "ESP32 woke up from deep sleep");
   }
 }
 
@@ -398,6 +438,10 @@ void loop()
       alarmOFF();
       lcdMeasurements();
     }
+  }
+  if (powerSource == "battery")
+  {
+    enterDeepSleep();
   }
   delay(3000);
 }
