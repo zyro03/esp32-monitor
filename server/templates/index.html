@@ -2,90 +2,56 @@
 <html lang="pl">
   <head>
     <meta charset="UTF-8" />
-    <title>ESP32 monitoring</title>
-    <meta http-equiv="refresh" content="5" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>ESP32 Monitor</title>
+
     <link rel="stylesheet" href="/static/style.css" />
   </head>
 
   <body>
-    <h1>ESP32 measurements</h1>
+    <header class="topbar">
+      <div>
+        <h1>ESP32 Monitor</h1>
+        <p>Environmental monitoring system</p>
+      </div>
 
-    <h2>Alarm settings</h2>
+      <div class="topbar-right">
+        <span>System OK</span>
+        <span id="clock">--:--:--</span>
+      </div>
+    </header>
 
-    <form method="POST" action="/settings">
-      <label>Maximum temperature:</label>
-      <input
-        type="number"
-        step="0.1"
-        name="temp_max"
-        value="{{ settings['temp_max'] }}"
-      />
+    <main class="dashboard">
+      <section class="panel">
+        <h2>Ostatnie pomiary</h2>
 
-      <br /><br />
+        <table>
+          <tr>
+            <th>ID</th>
+            <th>Urządzenie</th>
+            <th>Temperatura</th>
+            <th>Wilgotność</th>
+            <th>Alarm</th>
+            <th>Czas</th>
+          </tr>
 
-      <label>Maximum humidity:</label>
-      <input
-        type="number"
-        step="0.1"
-        name="hum_max"
-        value="{{ settings['hum_max'] }}"
-      />
+          {% for row in measurements %}
+          <tr>
+            <td>{{ row[0] }}</td>
+            <td>{{ row[1] }}</td>
+            <td>{{ row[2] }} °C</td>
+            <td>{{ row[3] }} %</td>
 
-      <br /><br />
+            <td>{% if row[4] %} Tak {% else %} Nie {% endif %}</td>
 
-      <button type="submit">Save settings</button>
-    </form>
+            <td>{{ row[5] }}</td>
+          </tr>
+          {% endfor %}
+        </table>
+      </section>
+    </main>
 
-    <hr />
-
-    <h2>Latest measurements</h2>
-
-    <table>
-      <tr>
-        <th>ID</th>
-        <th>Device</th>
-        <th>Temperature</th>
-        <th>Humidity</th>
-        <th>Alarm</th>
-        <th>Time</th>
-      </tr>
-
-      {% for measurement in measurements %}
-      <tr>
-        <td>{{ measurement[0] }}</td>
-        <td>{{ measurement[1] }}</td>
-        <td>{{ measurement[2] }}</td>
-        <td>{{ measurement[3] }}</td>
-        <td>{{ measurement[4] }}</td>
-        <td>{{ measurement[5] }}</td>
-      </tr>
-      {% endfor %}
-    </table>
-
-    <hr />
-
-    <h2>Alarm events</h2>
-
-    <table>
-      <tr>
-        <th>ID</th>
-        <th>Device</th>
-        <th>Temperature</th>
-        <th>Humidity</th>
-        <th>Reason</th>
-        <th>Time</th>
-      </tr>
-
-      {% for alarm in alarm_events %}
-      <tr>
-        <td>{{ alarm[0] }}</td>
-        <td>{{ alarm[1] }}</td>
-        <td>{{ alarm[2] }}</td>
-        <td>{{ alarm[3] }}</td>
-        <td>{{ alarm[4] }}</td>
-        <td>{{ alarm[5] }}</td>
-      </tr>
-      {% endfor %}
-    </table>
+    <script src="/static/app.js"></script>
   </body>
 </html>

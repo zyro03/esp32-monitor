@@ -25,7 +25,7 @@ def init_database():
             reason TEXT NOT NULL,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
-    """)   
+    """)
 
     connection.execute("""
         CREATE TABLE IF NOT EXISTS system_events (
@@ -46,7 +46,7 @@ def init_database():
 
     connection.execute("""
     INSERT OR IGNORE INTO settings (name, value)
-    VALUES 
+    VALUES
         ('temp_max', 30.0),
         ('hum_max', 70.0)
     """)
@@ -85,7 +85,7 @@ def save_alarm_event(device, temperature, humidity, reason):
         (device, temperature, humidity, reason))
     connection.commit()
     connection.close()
-    
+
 def get_latest_alarm_events():
     connection = sqlite3.connect(DATABASE_NAME)
     sql = """
@@ -97,7 +97,6 @@ def get_latest_alarm_events():
     alarm_events = connection.execute(sql).fetchall()
     connection.close()
     return alarm_events
-
 
 def get_latest_measurements():
     connection = sqlite3.connect(DATABASE_NAME)
@@ -125,9 +124,9 @@ def get_settings():
 def update_settings(temp_max, hum_max):
     connection = sqlite3.connect(DATABASE_NAME)
     connection.execute("""
-    UPDATE settings SET value = ? WHERE name = 'temp_max' """, [temp_max])
+    UPDATE settings SET value = ? WHERE name = 'temp_max' """, (temp_max,))
     connection.execute("""
-    UPDATE settings SET value = ? WHERE name = 'hum_max' """, [hum_max])
+    UPDATE settings SET value = ? WHERE name = 'hum_max' """, (hum_max,))
     connection.commit()
     connection.close()
 
@@ -136,7 +135,7 @@ def save_system_event(device, event_type, message):
     connection.execute("""
         INSERT INTO system_events (device, event_type, message)
         VALUES (?, ?, ?)
-    """, [device, event_type, message])
+    """, (device, event_type, message))
     connection.commit()
     connection.close()
 
@@ -145,7 +144,7 @@ def save_device_status(device, power_source, work_mode, wifi_status, mqtt_status
     connection.execute("""
         INSERT INTO device_status (device, power_source, work_mode, wifi_status, mqtt_status)
         VALUES (?, ?, ?, ?, ?)
-    """, [ device, power_source, work_mode, int(wifi_status), int(mqtt_status) ])
+    """, (device, power_source, work_mode, int(wifi_status), int(mqtt_status)))
     connection.commit()
     connection.close()
 
