@@ -434,6 +434,16 @@ void loop()
     mqttClient.loop();
   }
   updatePowerStatus();
+  if (powerSource == "battery")
+  {
+    bool sensorStatus = readSensor();
+    if (sensorStatus && mqttClient.connected())
+    {
+      bool alarmStatus = checkAlarm();
+      publishMeasurements(alarmStatus);
+    }
+    enterDeepSleep();
+  }
   lcd.clear();
   bool sensorStatus = readSensor();
 
@@ -492,9 +502,6 @@ void loop()
       statusScreen = !statusScreen;
     }
   }
-  if (powerSource == "battery")
-  {
-    enterDeepSleep();
-  }
+
   delay(3000);
 }
