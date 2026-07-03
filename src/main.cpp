@@ -13,6 +13,8 @@
 #define BUZZER_PIN 16
 #define LED_PIN 18
 
+#define POWER_DETECT_PIN 34
+
 #define BUZZER_ON LOW
 #define BUZZER_OFF HIGH
 
@@ -36,6 +38,8 @@ float humidity = 0.0;
 
 float tempMax = 30.0;
 float humMax = 70.0;
+
+bool lastMainPowerState = true;
 
 String powerSource = "main";
 String workMode = "normal";
@@ -159,7 +163,6 @@ void publishDeviceStatus()
   Serial.println(payload);
 }
 
-
 void checkWIFI()
 {
   if (WiFi.status() == WL_CONNECTED)
@@ -184,7 +187,8 @@ void publishSystemEvent(const char *eventType, const char *message)
   serializeJson(doc, payload);
   mqttClient.publish(MQTT_TOPIC_EVENT, payload);
   Serial.print("MQTT event sent: ");
-  Serial.println(payload);}
+  Serial.println(payload);
+}
 
 void connectMQTT()
 {
@@ -196,7 +200,7 @@ void connectMQTT()
     if (mqttClient.connect(MQTT_CLIENT_ID))
     {
       Serial.println("MQTT connected");
-      
+
       mqttClient.publish(MQTT_TOPIC_STATUS, "online");
       mqttClient.subscribe(MQTT_TOPIC_CONFIG);
       Serial.println("MQTT status sent and topic subscribed");
@@ -278,7 +282,39 @@ void handleMqttMessage(char *topic, byte *payload, unsigned int length)
   Serial.println("new config rec");
 }
 
+void updatePowerStatus()
+{
+  int powerValue = analogRead(POWER_DETECT_PIN);
+  bool mainPowerPresent = powerValue > 1000;
 
+  if (mainPowerPresent)
+  {
+    powerSource = "main";
+    workMode = "normal";
+    Serial.println("Power source: MAIN");
+  }
+  else
+  {
+    powerSource = "battery";
+    workMode = "battery";
+    Serial.println("Power source: BATTERY");
+  }
+
+  if (mainPowerPresent != lastMainPowerState)
+  {
+    if (mainPowerPresent)
+    {
+      publishSystemEvent("POWER_RESTORED", "Main power restored");
+    }
+    else
+    {
+      publishSystemEvent("POWER_LOSS", "Main power lost");
+    }
+
+    publishDeviceStatus();
+    lastMainPowerState = mainPowerPresent;
+  }
+}
 
 void setup()
 {
@@ -291,13 +327,16 @@ void setup()
 
   pinMode(BUZZER_PIN, OUTPUT);
   pinMode(LED_PIN, OUTPUT);
+  pinMode(POWER_DETECT_PIN, INPUT);
+  lastMainPowerState = analogRead(POWER_DETECT_PIN) > 1000;
 
   digitalWrite(BUZZER_PIN, BUZZER_OFF);
   digitalWrite(LED_PIN, LOW);
 
   connectWIFI();
   mqttClient.setCallback(handleMqttMessage);
-  if (WiFi.status() == WL_CONNECTED){
+  if (WiFi.status() == WL_CONNECTED)
+  {
     connectMQTT();
   }
 }
@@ -305,12 +344,15 @@ void setup()
 void loop()
 {
   checkWIFI();
-  if (WiFi.status() == WL_CONNECTED){
+  if (WiFi.status() == WL_CONNECTED)
+  {
     checkMQTT();
   }
-  if (mqttClient.connected()){
+  if (mqttClient.connected())
+  {
     mqttClient.loop();
   }
+  updatePowerStatus();
   lcd.clear();
   bool sensorStatus = readSensor();
 
@@ -318,7 +360,8 @@ void loop()
   {
     alarmOFF();
     lcdSensorError();
-    if(mqttClient.connected()){
+    if (mqttClient.connected())
+    {
       publishSystemEvent("SENSOR_ERROR", "DHT22 read failed");
     }
   }
@@ -333,16 +376,17 @@ void loop()
     Serial.println("-----");
 
     bool alarmStatus = checkAlarm();
-    
-    if(mqttClient.connected()){
-    publishMeasurements(alarmStatus);
-    publishAlarm(alarmStatus);
-    publishDeviceStatus();
+
+    if (mqttClient.connected())
+    {
+      publishMeasurements(alarmStatus);
+      publishAlarm(alarmStatus);
+      publishDeviceStatus();
     }
-    else{
+    else
+    {
       Serial.println("MQTT not connected, measurement not published");
     }
-
 
     if (alarmStatus)
     {
