@@ -41,6 +41,7 @@ float tempMax = 30.0;
 float humMax = 70.0;
 
 bool lastMainPowerState = true;
+RTC_DATA_ATTR bool wasOnBattery = false;
 
 String powerSource = "main";
 String workMode = "normal";
@@ -319,6 +320,7 @@ void updatePowerStatus()
 
 void enterDeepSleep()
 {
+  wasOnBattery = true;
   workMode = "deep_sleep";
 
   publishSystemEvent(
@@ -378,6 +380,12 @@ void setup()
     publishSystemEvent(
         "WAKE_UP",
         "ESP32 woke up from deep sleep");
+  }
+  if (powerSource == "main" && wasOnBattery && mqttClient.connected())
+  {
+    publishSystemEvent("POWER_RESTORED", "Main power restored");
+    publishDeviceStatus();
+    wasOnBattery = false;
   }
 }
 
