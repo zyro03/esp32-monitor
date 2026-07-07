@@ -19,7 +19,6 @@ RTC_DATA_ATTR bool sensorErrorActive = false;
 String powerSource = "main";
 String workMode = "normal";
 
-
 void setup()
 {
   Serial.begin(115200);
@@ -36,7 +35,7 @@ void setup()
   initNetwork();
   connectWIFI();
   updatePowerStatus();
-  
+
   if (isWiFiConnected())
   {
     connectMQTT();

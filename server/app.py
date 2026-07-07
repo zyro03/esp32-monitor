@@ -6,6 +6,7 @@ from database import (
     init_database,
     get_latest_measurements,
     get_latest_alarm_events,
+    get_latest_device_status,
     get_settings,
     update_settings,
 )
@@ -32,12 +33,14 @@ def index():
     measurements = get_latest_measurements()
     alarm_events = get_latest_alarm_events()
     settings = get_settings()
+    device_status = get_latest_device_status()
 
     return render_template(
         "index.html",
         measurements=measurements,
         alarm_events=alarm_events,
         settings=settings,
+        device_status=device_status,
     )
 
 @app.route("/settings", methods=["POST"])
