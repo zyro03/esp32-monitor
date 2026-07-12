@@ -134,8 +134,8 @@
         <section class="panel">
           <h2>Historia pomiarów</h2>
 
-          <div class="chartplaceholder">
-            Tutaj będzie wykres temperatury i wilgotności.
+          <div class="chart">
+            <canvas id="measurementChart"></canvas>
           </div>
         </section>
 
@@ -218,7 +218,7 @@
                   <td>{{ row[2] }} °C</td>
                   <td>{{ row[3] }} %</td>
                   <td>{% if row[4] %}Tak{% else %}Nie{% endif %}</td>
-                  <td>{{ row[5] }}</td>
+                  <td>{{ row[5][11:16] }}</td>
                 </tr>
                 {% else %}
                 <tr>
@@ -256,8 +256,11 @@
                   <td>{{ row[1] }}</td>
                   <td>{{ row[2] }} °C</td>
                   <td>{{ row[3] }} %</td>
-                  <td>{{ row[4] }}</td>
-                  <td>{{ row[5] }}</td>
+                  <td>
+                    {% if row[4] == "High temperature or humidity" %}
+                    Przekroczony próg {% else %} {{ row[4] }} {% endif %}
+                  </td>
+                  <td>{{ row[5][11:16] }}</td>
                 </tr>
                 {% else %}
                 <tr>
@@ -285,9 +288,29 @@
               </thead>
 
               <tbody>
+                {% for row in system_events %}
                 <tr>
-                  <td colspan="4">Zdarzenia systemowe podłączymy później.</td>
+                  <td>{{ row[0] }}</td>
+                  <td>{{ row[1] }}</td>
+                  <td>
+                    {% if row[1] == "POWER_LOSS" %} Urządzenie przeszło na
+                    zasilanie bateryjne {% elif row[1] == "POWER_RESTORED" %}
+                    Przywrócono zasilanie główne {% elif row[1] ==
+                    "DEEP_SLEEP_ENTER" %} Urządzenie przechodzi w tryb uśpienia
+                    {% elif row[1] == "WAKE_UP" %} Urządzenie wybudziło się z
+                    trybu uśpienia {% elif row[1] == "SENSOR_ERROR" %} Nie udało
+                    się odczytać danych z czujnika {% elif row[1] ==
+                    "SENSOR_RESTORED" %} Czujnik ponownie działa poprawnie {%
+                    elif row[1] == "MQTT_CONNECTED" %} Połączono MQTT {% else %}
+                    {{ row[2] }} {% endif %}
+                  </td>
+                  <td>{{ row[3][11:16] }}</td>
                 </tr>
+                {% else %}
+                <tr>
+                  <td colspan="4">Brak zdarzeń systemowych</td>
+                </tr>
+                {% endfor %}
               </tbody>
             </table>
           </div>
@@ -303,6 +326,7 @@
       serwerem aplikacji webowej.
     </footer>
 
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="/static/app.js"></script>
   </body>
 </html>

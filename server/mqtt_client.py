@@ -1,6 +1,6 @@
 import json
 import paho.mqtt.client as mqtt
-from database import init_database, save_measurement, save_alarm_event, save_system_event, save_device_status
+from database import init_database, save_measurement, save_alarm_event, save_system_event, save_device_status, get_settings
 from config import MQTT_BROKER, MQTT_PORT, MQTT_TOPIC_DATA, MQTT_TOPIC_EVENT, MQTT_TOPIC_DEVICE_STATUS
 
 def handle_message(client, userdata, message):
@@ -14,7 +14,18 @@ def handle_message(client, userdata, message):
             data["alarm"]
         )
         if data["alarm"]:
-            reason = "High temperature or humidity"
+            settings = get_settings()
+            temp_alarm = data["temperature"] > settings["temp_max"]
+            hum_alarm = data["humidity"] > settings["hum_max"]
+
+            if temp_alarm and hum_alarm:
+                reason = "HIGH_TEMP_AND_HUM"
+            elif temp_alarm:
+                reason = "HIGH_TEMP"
+            elif hum_alarm:
+                reason = "HIGH_HUM"
+            else:
+                reason = "ALARM"
 
             save_alarm_event(
                 data["device"],

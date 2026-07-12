@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="pl">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Status 24h</title>
+    <link rel="stylesheet" href="/static/style.css" />
+  </head>
+
+  <body>
+    <header class="topbar">
+      <h1>Status urządzenia z ostatnich 24 godzin</h1>
+
+      <div class="topbarright">
+        <a class="toplink" href="/">Strona główna</a>
+      </div>
+    </header>
+
+    <main class="dashboard">
+      <section class="pagepanel">
+        <h2>Historia statusu urządzenia</h2>
+
+        <div class="pagewrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Urządzenie</th>
+                <th>Zasilanie</th>
+                <th>Tryb pracy</th>
+                <th>Wi-Fi</th>
+                <th>MQTT</th>
+                <th>Czas</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {% for row in device_statuses %}
+              <tr>
+                <td>{{ row[0] }}</td>
+                <td>{{ row[1] }}</td>
+
+                <td>
+                  {% if row[2] == "battery" %} Zasilanie bateryjne {% elif
+                  row[2] == "main" %} Zasilanie główne {% else %} {{ row[2] }}
+                  {% endif %}
+                </td>
+
+                <td>
+                  {% if row[3] == "normal" %} Tryb normalny {% elif row[3] ==
+                  "battery" %} Tryb bateryjny {% elif row[3] == "deep_sleep" %}
+                  Tryb uśpienia {% else %} {{ row[3] }} {% endif %}
+                </td>
+
+                <td>{% if row[4] %}Połączono{% else %}Rozłączono{% endif %}</td>
+                <td>{% if row[5] %}Połączono{% else %}Rozłączono{% endif %}</td>
+                <td>{{ row[6] }}</td>
+              </tr>
+              {% else %}
+              <tr>
+                <td colspan="7">Brak statusów z ostatnich 24 godzin</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>

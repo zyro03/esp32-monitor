@@ -8,3 +8,36 @@ function updateClock() {
 
 updateClock();
 setInterval(updateClock, 1000);
+
+const chartElement = document.getElementById("measurementChart");
+
+if (chartElement) {
+  fetch("/chart-data")
+    .then(function (response) {
+      return response.json();
+    })
+    .then(function (data) {
+      new Chart(chartElement, {
+        type: "line",
+        data: {
+          labels: data.labels,
+          datasets: [
+            {
+              label: "Temperatura [°C]",
+              data: data.temperatures,
+              borderWidth: 2,
+            },
+            {
+              label: "Wilgotność [%]",
+              data: data.humidities,
+              borderWidth: 2,
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+        },
+      });
+    });
+}

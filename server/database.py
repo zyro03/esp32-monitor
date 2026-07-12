@@ -157,3 +157,66 @@ def get_latest_device_status():
         LIMIT 1 """).fetchone()
     connection.close()
     return row
+
+def get_measurements_last_24h():
+    connection = sqlite3.connect(DATABASE_NAME)
+    sql = """
+        SELECT id, device, temperature, humidity, alarm, created_at
+        FROM measurements
+        WHERE created_at >= datetime('now', '-24 hours')
+        ORDER BY id DESC
+    """
+    measurements = connection.execute(sql).fetchall()
+    connection.close()
+    return measurements
+
+def get_alarm_events_last_24h():
+    connection = sqlite3.connect(DATABASE_NAME)
+    sql = """
+        SELECT id, device, temperature, humidity, reason, created_at
+        FROM alarm_events
+        WHERE created_at >= datetime('now', '-24 hours')
+        ORDER BY id DESC
+    """
+    alarm_events = connection.execute(sql).fetchall()
+    connection.close()
+    return alarm_events
+
+def get_device_status_last_24h():
+    connection = sqlite3.connect(DATABASE_NAME)
+    sql = """
+        SELECT id, device, power_source, work_mode, wifi_status, mqtt_status, created_at
+        FROM device_status
+        WHERE created_at >= datetime('now', '-24 hours')
+        ORDER BY id DESC
+    """
+    device_statuses = connection.execute(sql).fetchall()
+    connection.close()
+    return device_statuses
+
+def get_latest_system_events():
+    connection = sqlite3.connect(DATABASE_NAME)
+    sql = """
+        SELECT id, event_type, message, created_at
+        FROM system_events
+        ORDER BY id DESC
+        LIMIT 5
+    """
+    system_events = connection.execute(sql).fetchall()
+    connection.close()
+    return system_events
+
+def get_measurements_for_chart():
+    connection = sqlite3.connect(DATABASE_NAME)
+
+    sql = """
+        SELECT temperature, humidity, created_at
+        FROM measurements
+        ORDER BY id DESC
+        LIMIT 60
+    """
+
+    rows = connection.execute(sql).fetchall()
+    connection.close()
+    rows = list(reversed(rows))
+    return rows
