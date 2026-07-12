@@ -3,54 +3,305 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
     <title>ESP32 Monitor</title>
-
     <link rel="stylesheet" href="/static/style.css" />
   </head>
 
   <body>
     <header class="topbar">
-      <div>
-        <h1>ESP32 Monitor</h1>
-        <p>Environmental monitoring system</p>
-      </div>
+      <h1>Bezprzewodowy system monitorowania warunków środowiskowych</h1>
 
-      <div class="topbar-right">
-        <span>System OK</span>
+      <div class="topbarright">
         <span id="clock">--:--:--</span>
       </div>
     </header>
 
     <main class="dashboard">
-      <section class="panel">
-        <h2>Ostatnie pomiary</h2>
+      <div class="rowtop">
+        <section class="panel">
+          <h2>Status urządzenia</h2>
 
-        <table>
-          <tr>
-            <th>ID</th>
-            <th>Urządzenie</th>
-            <th>Temperatura</th>
-            <th>Wilgotność</th>
-            <th>Alarm</th>
-            <th>Czas</th>
-          </tr>
+          <div class="statusgrid">
+            <div class="statusitem">
+              <span>Źródło zasilania</span>
 
-          {% for row in measurements %}
-          <tr>
-            <td>{{ row[0] }}</td>
-            <td>{{ row[1] }}</td>
-            <td>{{ row[2] }} °C</td>
-            <td>{{ row[3] }} %</td>
+              {% if device_status %} {% if device_status[2] == "battery" %}
+              <strong>Zasilanie bateryjne</strong>
+              {% elif device_status[2] == "main" %}
+              <strong>Zasilanie główne</strong>
+              {% else %}
+              <strong>{{ device_status[2] }}</strong>
+              {% endif %} {% else %}
+              <strong>Brak danych</strong>
+              {% endif %}
+            </div>
 
-            <td>{% if row[4] %} Tak {% else %} Nie {% endif %}</td>
+            <div class="statusitem">
+              <span>Tryb pracy</span>
 
-            <td>{{ row[5] }}</td>
-          </tr>
-          {% endfor %}
-        </table>
-      </section>
+              {% if device_status %} {% if device_status[3] == "normal" %}
+              <strong>Tryb normalny</strong>
+              {% elif device_status[3] == "battery" %}
+              <strong>Tryb bateryjny</strong>
+              {% elif device_status[3] == "deep_sleep" %}
+              <strong>Tryb uśpienia</strong>
+              {% else %}
+              <strong>{{ device_status[3] }}</strong>
+              {% endif %} {% else %}
+              <strong>Brak danych</strong>
+              {% endif %}
+            </div>
+
+            <div class="statusitem">
+              <span>Wi-Fi</span>
+              {% if device_status %} {% if device_status[4] %}
+              <strong>Połączono</strong>
+              {% else %}
+              <strong>Rozłączono</strong>
+              {% endif %} {% else %}
+              <strong>Brak danych</strong>
+              {% endif %}
+            </div>
+
+            <div class="statusitem">
+              <span>MQTT</span>
+              {% if device_status %} {% if device_status[5] %}
+              <strong>Połączono</strong>
+              {% else %}
+              <strong>Rozłączono</strong>
+              {% endif %} {% else %}
+              <strong>Brak danych</strong>
+              {% endif %}
+            </div>
+
+            <div class="statusitem">
+              <span>Aktualizacja</span>
+              {% if device_status %}
+              <strong>{{ device_status[6] }}</strong>
+              {% else %}
+              <strong>Brak danych</strong>
+              {% endif %}
+            </div>
+          </div>
+        </section>
+
+        <section class="panel">
+          <h2>Ostatni pomiar</h2>
+
+          <div class="lastmeasurement">
+            <div>
+              <span>Temperatura</span>
+              {% if measurements %}
+              <strong>{{ measurements[0][2] }} °C</strong>
+              {% else %}
+              <strong>Brak danych</strong>
+              {% endif %}
+            </div>
+
+            <div>
+              <span>Wilgotność</span>
+              {% if measurements %}
+              <strong>{{ measurements[0][3] }} %</strong>
+              {% else %}
+              <strong>Brak danych</strong>
+              {% endif %}
+            </div>
+
+            <div>
+              <span>Alarm</span>
+              {% if measurements %} {% if measurements[0][4] %}
+              <strong>Tak</strong>
+              {% else %}
+              <strong>Nie</strong>
+              {% endif %} {% else %}
+              <strong>Brak danych</strong>
+              {% endif %}
+            </div>
+
+            <div>
+              <span>Czas</span>
+              {% if measurements %}
+              <strong>{{ measurements[0][5] }}</strong>
+              {% else %}
+              <strong>Brak danych</strong>
+              {% endif %}
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <div class="rowchart">
+        <section class="panel">
+          <h2>Historia pomiarów</h2>
+
+          <div class="chartplaceholder">
+            Tutaj będzie wykres temperatury i wilgotności.
+          </div>
+        </section>
+
+        <section class="panel">
+          <h2>Ustawienia alarmów</h2>
+
+          <form method="POST" action="/settings" class="settingsform">
+            <div class="formrow">
+              <label for="temp_min">Minimalna temperatura</label>
+              <input
+                type="number"
+                step="0.1"
+                id="temp_min"
+                placeholder="np. 10.0"
+                disabled
+              />
+            </div>
+
+            <div class="formrow">
+              <label for="temp_max">Maksymalna temperatura</label>
+              <input
+                type="number"
+                step="0.1"
+                id="temp_max"
+                name="temp_max"
+                value="{{ settings['temp_max'] }}"
+              />
+            </div>
+
+            <div class="formrow">
+              <label for="hum_min">Minimalna wilgotność</label>
+              <input
+                type="number"
+                step="0.1"
+                id="hum_min"
+                placeholder="np. 30.0"
+                disabled
+              />
+            </div>
+
+            <div class="formrow">
+              <label for="hum_max">Maksymalna wilgotność</label>
+              <input
+                type="number"
+                step="0.1"
+                id="hum_max"
+                name="hum_max"
+                value="{{ settings['hum_max'] }}"
+              />
+              <br />
+            </div>
+
+            <button type="submit">Zapisz ustawienia</button>
+          </form>
+        </section>
+      </div>
+
+      <div class="rowtables">
+        <section class="tablepanel">
+          <h2>Ostatnie pomiary</h2>
+
+          <div class="tablewrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Urządzenie</th>
+                  <th>Temperatura</th>
+                  <th>Wilgotność</th>
+                  <th>Alarm</th>
+                  <th>Czas</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                {% for row in measurements %}
+                <tr>
+                  <td>{{ row[0] }}</td>
+                  <td>{{ row[1] }}</td>
+                  <td>{{ row[2] }} °C</td>
+                  <td>{{ row[3] }} %</td>
+                  <td>{% if row[4] %}Tak{% else %}Nie{% endif %}</td>
+                  <td>{{ row[5] }}</td>
+                </tr>
+                {% else %}
+                <tr>
+                  <td colspan="6">Brak pomiarów</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          <a class="tablelink" href="/measurements"
+            >Pokaż pomiary z ostatnich 24h</a
+          >
+        </section>
+
+        <section class="tablepanel">
+          <h2>Alarmy</h2>
+
+          <div class="tablewrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Urządzenie</th>
+                  <th>Temperatura</th>
+                  <th>Wilgotność</th>
+                  <th>Powód</th>
+                  <th>Czas</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                {% for row in alarm_events %}
+                <tr>
+                  <td>{{ row[0] }}</td>
+                  <td>{{ row[1] }}</td>
+                  <td>{{ row[2] }} °C</td>
+                  <td>{{ row[3] }} %</td>
+                  <td>{{ row[4] }}</td>
+                  <td>{{ row[5] }}</td>
+                </tr>
+                {% else %}
+                <tr>
+                  <td colspan="6">Brak alarmów</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          <a class="tablelink" href="/alarms">Pokaż alarmy z ostatnich 24h</a>
+        </section>
+
+        <section class="tablepanel">
+          <h2>Zdarzenia systemowe</h2>
+
+          <div class="tablewrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Typ</th>
+                  <th>Opis</th>
+                  <th>Czas</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                <tr>
+                  <td colspan="4">Zdarzenia systemowe podłączymy później.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <a class="tablelink" href="/status"
+            >Pokaż status urządzenia z ostatnich 24h</a
+          >
+        </section>
+      </div>
     </main>
+
+    <footer class="footer">
+      System bezprzewodowego monitorowania warunków środowiskowych z centralnym
+      serwerem aplikacji webowej.
+    </footer>
 
     <script src="/static/app.js"></script>
   </body>

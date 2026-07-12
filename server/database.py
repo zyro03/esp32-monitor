@@ -92,7 +92,7 @@ def get_latest_alarm_events():
         SELECT id, device, temperature, humidity, reason, created_at
         FROM alarm_events
         ORDER BY id DESC
-        LIMIT 20
+        LIMIT 5
     """
     alarm_events = connection.execute(sql).fetchall()
     connection.close()
@@ -104,7 +104,7 @@ def get_latest_measurements():
         SELECT id, device, temperature, humidity, alarm, created_at
         FROM measurements
         ORDER BY id DESC
-        LIMIT 20
+        LIMIT 5
     """
     measurements = connection.execute(sql).fetchall()
     connection.close()
