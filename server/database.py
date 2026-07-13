@@ -47,8 +47,10 @@ def init_database():
     connection.execute("""
     INSERT OR IGNORE INTO settings (name, value)
     VALUES
-        ('temp_max', 30.0),
-        ('hum_max', 70.0)
+    ('temp_min', 10.0),
+    ('temp_max', 30.0),
+    ('hum_min', 30.0),
+    ('hum_max', 70.0)
     """)
 
     connection.execute("""
@@ -121,12 +123,20 @@ def get_settings():
         settings[row[0]]=row[1]
     return settings
 
-def update_settings(temp_max, hum_max):
+def update_settings(temp_min, temp_max, hum_min, hum_max):
     connection = sqlite3.connect(DATABASE_NAME)
     connection.execute("""
-    UPDATE settings SET value = ? WHERE name = 'temp_max' """, (temp_max,))
+    UPDATE settings SET value = ? WHERE name = 'temp_min'
+    """, (temp_min,))
     connection.execute("""
-    UPDATE settings SET value = ? WHERE name = 'hum_max' """, (hum_max,))
+    UPDATE settings SET value = ? WHERE name = 'temp_max'
+    """, (temp_max,))
+    connection.execute("""
+    UPDATE settings SET value = ? WHERE name = 'hum_min'
+    """, (hum_min,))
+    connection.execute("""
+    UPDATE settings SET value = ? WHERE name = 'hum_max'
+    """, (hum_max,))
     connection.commit()
     connection.close()
 
@@ -182,11 +192,11 @@ def get_alarm_events_last_24h():
     connection.close()
     return alarm_events
 
-def get_device_status_last_24h():
+def get_system_events_last_24h():
     connection = sqlite3.connect(DATABASE_NAME)
     sql = """
-        SELECT id, device, power_source, work_mode, wifi_status, mqtt_status, created_at
-        FROM device_status
+        SELECT id, event_type, message, created_at
+        FROM system_events
         WHERE created_at >= datetime('now', '-24 hours')
         ORDER BY id DESC
     """
@@ -215,7 +225,6 @@ def get_measurements_for_chart():
         ORDER BY id DESC
         LIMIT 60
     """
-
     rows = connection.execute(sql).fetchall()
     connection.close()
     rows = list(reversed(rows))

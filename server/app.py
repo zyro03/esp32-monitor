@@ -11,7 +11,7 @@ from database import (
     update_settings,
     get_measurements_last_24h,
     get_alarm_events_last_24h,
-    get_device_status_last_24h,
+    get_system_events_last_24h,
     get_latest_system_events,
     get_measurements_for_chart,
 )
@@ -20,9 +20,11 @@ from config import MQTT_BROKER, MQTT_PORT, MQTT_TOPIC_CONFIG
 
 app = Flask(__name__)
 
-def publish_config(temp_max, hum_max):
+def publish_config(temp_min, temp_max, hum_min, hum_max):
     payload = {
+        "temp_min": temp_min,
         "temp_max": temp_max,
+        "hum_min": hum_min,
         "hum_max": hum_max,
     }
 
@@ -52,11 +54,13 @@ def index():
 
 @app.route("/settings", methods=["POST"])
 def settings():
+    temp_min = float(request.form["temp_min"])
     temp_max = float(request.form["temp_max"])
+    hum_min = float(request.form["hum_min"])
     hum_max = float(request.form["hum_max"])
 
-    update_settings(temp_max, hum_max)
-    publish_config(temp_max, hum_max)
+    update_settings(temp_min, temp_max, hum_min, hum_max)
+    publish_config(temp_min, temp_max, hum_min, hum_max)
 
     return redirect("/")
 
@@ -80,13 +84,13 @@ def alarms_page():
     )
 
 
-@app.route("/status")
+@app.route("/events")
 def status_page():
-    device_statuses = get_device_status_last_24h()
+    system_events = get_system_events_last_24h()
 
     return render_template(
-        "status.html",
-        device_statuses=device_statuses,
+        "events.html",
+        system_events=system_events,
     )
 
 @app.route("/chart-data")

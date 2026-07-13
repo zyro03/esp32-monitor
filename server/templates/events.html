@@ -24,40 +24,38 @@
             <thead>
               <tr>
                 <th>ID</th>
-                <th>Urządzenie</th>
-                <th>Zasilanie</th>
-                <th>Tryb pracy</th>
-                <th>Wi-Fi</th>
-                <th>MQTT</th>
+                <th>Typ</th>
+                <th>Opis</th>
                 <th>Czas</th>
               </tr>
             </thead>
 
             <tbody>
-              {% for row in device_statuses %}
+              {% for row in system_events %}
               <tr>
                 <td>{{ row[0] }}</td>
                 <td>{{ row[1] }}</td>
 
                 <td>
-                  {% if row[2] == "battery" %} Zasilanie bateryjne {% elif
-                  row[2] == "main" %} Zasilanie główne {% else %} {{ row[2] }}
-                  {% endif %}
+                  {% if row[1] == "POWER_LOSS" %} Urządzenie przeszło na
+                  zasilanie bateryjne {% elif row[1] == "POWER_RESTORED" %}
+                  Przywrócono zasilanie główne {% elif row[1] ==
+                  "DEEP_SLEEP_ENTER" %} Urządzenie przechodzi w tryb uśpienia {%
+                  elif row[1] == "WAKE_UP" %} Urządzenie wybudziło się z trybu
+                  uśpienia {% elif row[1] == "SENSOR_ERROR" %} Nie udało się
+                  odczytać danych z czujnika {% elif row[1] == "SENSOR_RESTORED"
+                  %} Czujnik ponownie działa poprawnie {% elif row[1] ==
+                  "MQTT_CONNECTED" %} Połączono MQTT {% else %} {{ row[2] }} {%
+                  endif %}
                 </td>
 
-                <td>
-                  {% if row[3] == "normal" %} Tryb normalny {% elif row[3] ==
-                  "battery" %} Tryb bateryjny {% elif row[3] == "deep_sleep" %}
-                  Tryb uśpienia {% else %} {{ row[3] }} {% endif %}
-                </td>
-
-                <td>{% if row[4] %}Połączono{% else %}Rozłączono{% endif %}</td>
-                <td>{% if row[5] %}Połączono{% else %}Rozłączono{% endif %}</td>
-                <td>{{ row[6] }}</td>
+                <td>{{ row[3][11:16] }}</td>
               </tr>
               {% else %}
               <tr>
-                <td colspan="7">Brak statusów z ostatnich 24 godzin</td>
+                <td colspan="4">
+                  Brak zdarzeń systemowych z ostatnich 24 godzin
+                </td>
               </tr>
               {% endfor %}
             </tbody>

@@ -14,12 +14,12 @@ extern String powerSource;
 void lcdMeasurements()
 {
   lcd.setCursor(0, 0);
-  lcd.print("Temp: ");
+  lcd.print("TEMP: ");
   lcd.print(temperature, 1);
   lcd.print(" C");
 
   lcd.setCursor(0, 1);
-  lcd.print("Humi: ");
+  lcd.print("WILG: ");
   lcd.print(humidity, 1);
   lcd.print(" %");
 }
@@ -29,7 +29,7 @@ void lcdSensorError()
   lcd.setCursor(0, 0);
   lcd.print("DHT22 ERROR");
   lcd.setCursor(0, 1);
-  lcd.print("Check sensor");
+  lcd.print("Sprawdz sensor!");
 }
 
 void lcdAlarm()
@@ -39,11 +39,11 @@ void lcdAlarm()
   lcd.setCursor(0, 1);
   if (temperature > tempMax)
   {
-    lcd.print("HIGH temp!");
+    lcd.print("Alert temperatura!");
   }
   else
   {
-    lcd.print("HIGH humi!");
+    lcd.print("Alert wilgotność!");
   }
 }
 
@@ -51,13 +51,13 @@ void lcdBatterySleep()
 {
   lcd.clear();
   lcd.setCursor(0, 0);
-  lcd.print("Power: BATTERY");
+  lcd.print("Z: AKU");
   lcd.setCursor(0, 1);
   lcd.print("T:");
   lcd.print(temperature, 1);
   lcd.print("C");
   lcd.setCursor(9, 1);
-  lcd.print("H:");
+  lcd.print("W:");
   lcd.print(humidity, 1);
   lcd.print("%");
 }
@@ -83,14 +83,14 @@ void lcdStatus()
     lcd.print("MQ:OFF");
   }
   lcd.setCursor(0, 1);
-  lcd.print("Power: ");
+  lcd.print("Z: ");
   if (powerSource == "main")
   {
-    lcd.print("MAIN");
+    lcd.print("GLOWNE");
   }
   else
   {
-    lcd.print("BATTERY");
+    lcd.print("BATERIA");
   }
 }
 

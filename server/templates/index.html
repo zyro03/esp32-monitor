@@ -149,8 +149,9 @@
                 type="number"
                 step="0.1"
                 id="temp_min"
-                placeholder="np. 10.0"
-                disabled
+                name="temp_min"
+                value="{{ settings['temp_min'] }}"
+                required
               />
             </div>
 
@@ -162,6 +163,7 @@
                 id="temp_max"
                 name="temp_max"
                 value="{{ settings['temp_max'] }}"
+                required
               />
             </div>
 
@@ -171,8 +173,9 @@
                 type="number"
                 step="0.1"
                 id="hum_min"
-                placeholder="np. 30.0"
-                disabled
+                name="hum_min"
+                value="{{ settings['hum_min'] }}"
+                required
               />
             </div>
 
@@ -184,6 +187,7 @@
                 id="hum_max"
                 name="hum_max"
                 value="{{ settings['hum_max'] }}"
+                required
               />
               <br />
             </div>
@@ -314,7 +318,7 @@
               </tbody>
             </table>
           </div>
-          <a class="tablelink" href="/status"
+          <a class="tablelink" href="/events"
             >Pokaż status urządzenia z ostatnich 24h</a
           >
         </section>
