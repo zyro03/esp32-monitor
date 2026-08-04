@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="pl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>Logowanie</title>
+
+    <link rel="stylesheet" href="/static/style.css" />
+  </head>
+
+  <body>
+    <header class="topbar">
+      <h1>ESP32 Monitor</h1>
+    </header>
+
+    <main class="loginmain">
+      <section class="loginpanel">
+        <h2>Logowanie</h2>
+
+        {% if error %}
+        <p class="loginerror">{{ error }}</p>
+        {% endif %}
+
+        <form method="POST" action="/login">
+          <div class="loginfield">
+            <label for="username">Nazwa użytkownika</label>
+
+            <input type="text" id="username" name="username" required />
+          </div>
+
+          <div class="loginfield">
+            <label for="password">Hasło</label>
+
+            <input type="password" id="password" name="password" required />
+          </div>
+
+          <button type="submit">Zaloguj się</button>
+        </form>
+      </section>
+    </main>
+  </body>
+</html>
