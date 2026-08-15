@@ -9,7 +9,10 @@
 float temperature = 0.0;
 float humidity = 0.0;
 
+float tempMin = 10.0;
 float tempMax = 30.0;
+
+float humMin = 30.0;
 float humMax = 70.0;
 
 bool statusScreen = false;
@@ -25,7 +28,7 @@ void setup()
   esp_sleep_wakeup_cause_t wakeupCause = esp_sleep_get_wakeup_cause();
   if (wakeupCause == ESP_SLEEP_WAKEUP_TIMER)
   {
-    Serial.println("Wake up from deep sleep timer");
+    Serial.println("[SLEEP] Wake up from timer");
   }
   initDisplay();
   initSensor();
@@ -71,7 +74,6 @@ void loop()
     }
     enterDeepSleep();
   }
-  clearDisplay();
   bool sensorStatus = readSensor();
 
   if (!sensorStatus)
@@ -91,15 +93,21 @@ void loop()
       publishSystemEvent("SENSOR_RESTORED", "DHT22 restored");
     }
     sensorErrorActive = false;
-    Serial.print("Temperature: ");
+    Serial.print("[SENSOR] T=");
     Serial.print(temperature, 1);
-    Serial.println(" C");
-    Serial.print("Humidity: ");
+    Serial.print(" C | H=");
     Serial.print(humidity, 1);
     Serial.println(" %");
-    Serial.println("-----");
 
     bool alarmStatus = checkAlarm();
+    if (alarmStatus)
+    {
+      Serial.println("[ALARM] ON");
+    }
+    else
+    {
+      Serial.println("[ALARM] OFF");
+    }
 
     if (isMQTTConnected())
     {
@@ -108,7 +116,7 @@ void loop()
     }
     else
     {
-      Serial.println("MQTT not connected, measurement not published");
+      Serial.println("[MQTT] Not connected - measurement skipped");
     }
     if (alarmStatus)
     {

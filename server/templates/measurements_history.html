@@ -2,13 +2,13 @@
 <html lang="pl">
   <head>
     <meta charset="UTF-8" />
-    <title>Pomiary 24h</title>
+    <title>Pełna historia pomiarów</title>
     <link rel="stylesheet" href="/static/style.css" />
   </head>
 
   <body>
     <header class="topbar">
-      <h1>Pomiary z ostatnich 24 godzin</h1>
+      <h1>Pełna historia pomiarów</h1>
 
       <div class="topbarright">
         <a class="toplink" href="/">Strona główna</a>
@@ -17,7 +17,7 @@
 
     <main class="dashboard">
       <section class="pagepanel">
-        <h2>Historia pomiarów</h2>
+        <h2>Wszystkie pomiary</h2>
 
         <div class="pagewrapper">
           <table>
@@ -44,7 +44,7 @@
               </tr>
               {% else %}
               <tr>
-                <td colspan="6">Brak pomiarów z ostatnich 24 godzin</td>
+                <td colspan="6">Brak zapisanych pomiarów</td>
               </tr>
               {% endfor %}
             </tbody>

@@ -1,8 +1,7 @@
 from flask import (Flask, request, redirect, render_template, jsonify, session)
 import json
 import paho.mqtt.client as mqtt
-
-
+from datetime import datetime
 from database import (
     init_database,
     get_latest_measurements,
@@ -15,9 +14,11 @@ from database import (
     get_system_events_last_24h,
     get_latest_system_events,
     get_measurements_for_chart,
+    get_all_measurements,
+    get_all_alarm_events,
+    get_all_system_events
 )
-
-from config import (MQTT_BROKER, MQTT_PORT, MQTT_TOPIC_CONFIG, FLASK_SECRET_KEY, ADMIN_USERNAME, ADMIN_PASSWORD_HASH,)
+from config import (MQTT_BROKER, MQTT_PORT, MQTT_TOPIC_CONFIG, FLASK_SECRET_KEY, ADMIN_USERNAME, ADMIN_PASSWORD_HASH,MQTT_USERNAME, MQTT_PASSWORD,)
 from werkzeug.security import check_password_hash
 
 app = Flask(__name__)
@@ -30,12 +31,17 @@ def publish_config(temp_min, temp_max, hum_min, hum_max):
         "hum_max": hum_max,
     }
 
-    client = mqtt.Client()
-    client.connect(MQTT_BROKER, MQTT_PORT)
-    client.publish(MQTT_TOPIC_CONFIG, json.dumps(payload), retain=True)
-    client.disconnect()
-
-    print("Config sent:", payload)
+    try:
+        client = mqtt.Client()
+        client.username_pw_set(MQTT_USERNAME, MQTT_PASSWORD)
+        client.connect(MQTT_BROKER, MQTT_PORT)
+        result = client.publish(MQTT_TOPIC_CONFIG, json.dumps(payload), retain=True)
+        result.wait_for_publish()
+        client.disconnect()
+        return True
+    except Exception as e:
+        print(e)
+        return False    
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
@@ -73,6 +79,15 @@ def index():
     settings = get_settings()
     system_events = get_latest_system_events()
     device_status = get_latest_device_status()
+    device_online = False
+
+    if device_status:
+        last_update = datetime.strptime(
+            device_status[6],
+            "%Y-%m-%d %H:%M:%S")
+    difference = datetime.now() - last_update
+    if difference.total_seconds() < 120:
+        device_online = True
 
     return render_template(
         "index.html",
@@ -80,7 +95,8 @@ def index():
         alarm_events=alarm_events,
         settings=settings,
         device_status=device_status,
-        system_events = system_events
+        system_events = system_events,
+        device_online=device_online,
     )
 
 @app.route("/settings", methods=["POST"])
@@ -92,9 +108,9 @@ def settings():
     hum_min = float(request.form["hum_min"])
     hum_max = float(request.form["hum_max"])
 
-    update_settings(temp_min, temp_max, hum_min, hum_max)
-    publish_config(temp_min, temp_max, hum_min, hum_max)
-
+    success = publish_config(temp_min, temp_max, hum_min, hum_max)
+    if success:
+        update_settings(temp_min, temp_max, hum_min, hum_max)
     return redirect("/")
 
 @app.route("/measurements")
@@ -155,6 +171,38 @@ def chart_data():
         "humidities": humidities
     })
 
+@app.route("/measurements/history")
+def measurements_history():
+    measurements = get_all_measurements()
+
+    return render_template(
+        "measurements_history.html",
+        measurements=measurements
+    )
+
+
+@app.route("/alarms/history")
+def alarms_history():
+    alarm_events = get_all_alarm_events()
+
+    return render_template(
+        "alarms_history.html",
+        alarm_events=alarm_events
+    )
+
+
+@app.route("/events/history")
+def events_history():
+    system_events = get_all_system_events()
+
+    return render_template(
+        "events_history.html",
+        system_events=system_events
+    )
+
 if __name__ == "__main__":
     init_database()
-    app.run(debug=True, port=5001)
+    app.run(
+        host="0.0.0.0",
+        port=5001,
+        debug=True)

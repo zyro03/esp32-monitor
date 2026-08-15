@@ -77,7 +77,7 @@ body {
 .statusgrid {
   height: 90px;
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(6, 1fr);
   align-items: center;
 }
 
@@ -287,4 +287,19 @@ td {
   color: #a00000;
   border-radius: 5px;
   text-align: center;
+}
+
+.tablelinks {
+  display: flex;
+  gap: 12px;
+  margin-top: 5px;
+  flex-wrap: wrap;
+}
+
+.online {
+  color: #198754 !important;
+}
+
+.offline {
+  color: #dc3545 !important;
 }

@@ -12,7 +12,7 @@ def init_database():
             temperature FLOAT NOT NULL,
             humidity FLOAT NOT NULL,
             alarm INTEGER NOT NULL,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            created_at TIMESTAMP DEFAULT (datetime('now', 'localtime'))
         )
     """)
 
@@ -23,7 +23,7 @@ def init_database():
             temperature FLOAT NOT NULL,
             humidity FLOAT NOT NULL,
             reason TEXT NOT NULL,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            created_at TIMESTAMP DEFAULT (datetime('now', 'localtime'))
         )
     """)
 
@@ -33,7 +33,7 @@ def init_database():
             device TEXT NOT NULL,
             event_type TEXT NOT NULL,
             message TEXT,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            created_at TIMESTAMP DEFAULT (datetime('now', 'localtime'))
         )
     """)
 
@@ -61,7 +61,7 @@ def init_database():
         work_mode TEXT NOT NULL,
         wifi_status INTEGER NOT NULL,
         mqtt_status INTEGER NOT NULL,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        created_at TIMESTAMP DEFAULT (datetime('now', 'localtime'))
     )
     """)
 
@@ -173,7 +173,7 @@ def get_measurements_last_24h():
     sql = """
         SELECT id, device, temperature, humidity, alarm, created_at
         FROM measurements
-        WHERE created_at >= datetime('now', '-24 hours')
+        WHERE created_at >= datetime('now', 'localtime', '-24 hours')
         ORDER BY id DESC
     """
     measurements = connection.execute(sql).fetchall()
@@ -185,7 +185,7 @@ def get_alarm_events_last_24h():
     sql = """
         SELECT id, device, temperature, humidity, reason, created_at
         FROM alarm_events
-        WHERE created_at >= datetime('now', '-24 hours')
+        WHERE created_at >= datetime('now', 'localtime', '-24 hours')
         ORDER BY id DESC
     """
     alarm_events = connection.execute(sql).fetchall()
@@ -197,7 +197,7 @@ def get_system_events_last_24h():
     sql = """
         SELECT id, event_type, message, created_at
         FROM system_events
-        WHERE created_at >= datetime('now', '-24 hours')
+        WHERE created_at >= datetime('now', 'localtime', '-24 hours')
         ORDER BY id DESC
     """
     device_statuses = connection.execute(sql).fetchall()
@@ -229,3 +229,38 @@ def get_measurements_for_chart():
     connection.close()
     rows = list(reversed(rows))
     return rows
+
+def get_all_measurements():
+    connection = sqlite3.connect(DATABASE_NAME)
+    sql = """
+        SELECT id, device, temperature, humidity, alarm, created_at
+        FROM measurements
+        ORDER BY id DESC
+    """
+    measurements = connection.execute(sql).fetchall()
+    connection.close()
+    return measurements
+
+
+def get_all_alarm_events():
+    connection = sqlite3.connect(DATABASE_NAME)
+    sql = """
+        SELECT id, device, temperature, humidity, reason, created_at
+        FROM alarm_events
+        ORDER BY id DESC
+    """
+    alarm_events = connection.execute(sql).fetchall()
+    connection.close()
+    return alarm_events
+
+
+def get_all_system_events():
+    connection = sqlite3.connect(DATABASE_NAME)
+    sql = """
+        SELECT id, event_type, message, created_at
+        FROM system_events
+        ORDER BY id DESC
+    """
+    system_events = connection.execute(sql).fetchall()
+    connection.close()
+    return system_events

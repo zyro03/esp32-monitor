@@ -24,6 +24,15 @@
 
           <div class="statusgrid">
             <div class="statusitem">
+              <span>Status urządzenia</span>
+
+              {% if device_online %}
+              <strong class="online">Online</strong>
+              {% else %}
+              <strong class="offline">Offline</strong>
+              {% endif %}
+            </div>
+            <div class="statusitem">
               <span>Źródło zasilania</span>
 
               {% if device_status %} {% if device_status[2] == "battery" %}
@@ -233,9 +242,13 @@
               </tbody>
             </table>
           </div>
-          <a class="tablelink" href="/measurements"
-            >Pokaż pomiary z ostatnich 24h</a
-          >
+          <div class="tablelinks">
+            <a class="tablelink" href="/measurements"> Ostatnie 24h </a>
+
+            <a class="tablelink" href="/measurements/history">
+              Pełna historia
+            </a>
+          </div>
         </section>
 
         <section class="tablepanel">
@@ -275,7 +288,11 @@
               </tbody>
             </table>
           </div>
-          <a class="tablelink" href="/alarms">Pokaż alarmy z ostatnich 24h</a>
+          <div class="tablelinks">
+            <a class="tablelink" href="/alarms"> Ostatnie 24h </a>
+
+            <a class="tablelink" href="/alarms/history"> Pełna historia </a>
+          </div>
         </section>
 
         <section class="tablepanel">
@@ -319,9 +336,11 @@
               </tbody>
             </table>
           </div>
-          <a class="tablelink" href="/events"
-            >Pokaż status urządzenia z ostatnich 24h</a
-          >
+          <div class="tablelinks">
+            <a class="tablelink" href="/events"> Ostatnie 24h </a>
+
+            <a class="tablelink" href="/events/history"> Pełna historia </a>
+          </div>
         </section>
       </div>
     </main>

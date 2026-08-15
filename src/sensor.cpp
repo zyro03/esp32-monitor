@@ -3,19 +3,23 @@
 #include <Arduino.h>
 #include <DHT.h>
 
-#define DHT_PIN 4
+#define DHT_PIN 19
 #define DHT_TYPE DHT22
 
 DHT dht(DHT_PIN, DHT_TYPE);
 
 extern float temperature;
 extern float humidity;
+
+extern float tempMin;
 extern float tempMax;
+
+extern float humMin;
 extern float humMax;
 
 void initSensor()
 {
-    dht.begin();
+  dht.begin();
 }
 
 bool readSensor()
@@ -35,7 +39,7 @@ bool readSensor()
 
 bool checkAlarm()
 {
-  if (temperature > tempMax || humidity > humMax)
+  if (temperature > tempMax || humidity > humMax || temperature < tempMin || humidity < humMin)
   {
     return true;
   }
@@ -44,4 +48,3 @@ bool checkAlarm()
     return false;
   }
 }
-

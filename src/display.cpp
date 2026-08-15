@@ -9,104 +9,115 @@ LiquidCrystal_I2C lcd(0x27, 16, 2);
 extern float temperature;
 extern float humidity;
 extern float tempMax;
+extern float tempMin;
+extern float humMax;
+extern float humMin;
 extern String powerSource;
 
 void lcdMeasurements()
 {
-  lcd.setCursor(0, 0);
-  lcd.print("TEMP: ");
-  lcd.print(temperature, 1);
-  lcd.print(" C");
+    lcd.setCursor(0, 0);
+    lcd.print("Temp:   ");
+    lcd.print(temperature, 1);
+    lcd.print(" C ");
 
-  lcd.setCursor(0, 1);
-  lcd.print("WILG: ");
-  lcd.print(humidity, 1);
-  lcd.print(" %");
+    lcd.setCursor(0, 1);
+    lcd.print("Wilg:   ");
+    lcd.print(humidity, 1);
+    lcd.print(" % ");
 }
 
 void lcdSensorError()
 {
-  lcd.setCursor(0, 0);
-  lcd.print("DHT22 ERROR");
-  lcd.setCursor(0, 1);
-  lcd.print("Sprawdz sensor!");
+    lcd.setCursor(0, 0);
+    lcd.print("BLAD CZUJNIKA");
+    lcd.setCursor(0, 1);
+    lcd.print("DHT22");
 }
 
 void lcdAlarm()
 {
-  lcd.setCursor(0, 0);
-  lcd.print("ALARM!");
-  lcd.setCursor(0, 1);
-  if (temperature > tempMax)
-  {
-    lcd.print("Alert temperatura!");
-  }
-  else
-  {
-    lcd.print("Alert wilgotność!");
-  }
+    lcd.setCursor(0, 0);
+    lcd.print("ALARM!          ");
+
+    lcd.setCursor(0, 1);
+
+    if (temperature < tempMin)
+    {
+        lcd.print("TEMP ZA NISKA   ");
+    }
+    else if (temperature > tempMax)
+    {
+        lcd.print("TEMP ZA WYSOKA  ");
+    }
+    else if (humidity < humMin)
+    {
+        lcd.print("WILG ZA NISKA   ");
+    }
+    else if (humidity > humMax)
+    {
+        lcd.print("WILG ZA WYSOKA  ");
+    }
+    else
+    {
+        lcd.print("ALARM           ");
+    }
 }
 
 void lcdBatterySleep()
 {
-  lcd.clear();
-  lcd.setCursor(0, 0);
-  lcd.print("Z: AKU");
-  lcd.setCursor(0, 1);
-  lcd.print("T:");
-  lcd.print(temperature, 1);
-  lcd.print("C");
-  lcd.setCursor(9, 1);
-  lcd.print("W:");
-  lcd.print(humidity, 1);
-  lcd.print("%");
-}
-
-void lcdStatus()
-{
-  lcd.setCursor(0, 0);
-  if (isWiFiConnected())
-  {
-    lcd.print("WiFi:OK");
-  }
-  else
-  {
-    lcd.print("WiFi:OFF");
-  }
-  lcd.setCursor(9, 0);
-  if (isMQTTConnected())
-  {
-    lcd.print("MQ:OK");
-  }
-  else
-  {
-    lcd.print("MQ:OFF");
-  }
-  lcd.setCursor(0, 1);
-  lcd.print("Z: ");
-  if (powerSource == "main")
-  {
-    lcd.print("GLOWNE");
-  }
-  else
-  {
-    lcd.print("BATERIA");
-  }
+    lcd.clear();
+    lcd.setCursor(0, 0);
+    lcd.print("ZASILANIE: AKU  ");
+    lcd.setCursor(0, 1);
+    lcd.print("T:");
+    lcd.print(temperature, 1);
+    lcd.print("C");
+    lcd.setCursor(9, 1);
+    lcd.print("W:");
+    lcd.print(humidity, 1);
+    lcd.print("%");
 }
 
 void initDisplay()
 {
-    Wire.begin(21, 22);
+    Wire.begin(17, 21);
     lcd.init();
     lcd.backlight();
     lcd.clear();
 }
+void lcdStatus()
+{
+    lcd.setCursor(0, 0);
 
-void clearDisplay(){
+    if (powerSource == "main")
+    {
+        lcd.print("Zasilanie: SIEC ");
+    }
+    else
+    {
+        lcd.print("Zasilanie: AKU  ");
+    }
+
+    lcd.setCursor(0, 1);
+
+    if (isMQTTConnected())
+    {
+        lcd.print("MQTT: POLACZONY ");
+    }
+    else
+    {
+        lcd.print("MQTT: BRAK      ");
+    }
+}
+
+void clearDisplay()
+{
     lcd.clear();
 }
 
-void disableDisplay(){
+void disableDisplay()
+{
     lcd.clear();
     lcd.noBacklight();
 }

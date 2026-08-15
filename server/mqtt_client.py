@@ -1,9 +1,11 @@
 import json
 import paho.mqtt.client as mqtt
 from database import init_database, save_measurement, save_alarm_event, save_system_event, save_device_status, get_settings
-from config import MQTT_BROKER, MQTT_PORT, MQTT_TOPIC_DATA, MQTT_TOPIC_EVENT, MQTT_TOPIC_DEVICE_STATUS
+from config import MQTT_BROKER, MQTT_PORT, MQTT_TOPIC_DATA, MQTT_TOPIC_EVENT, MQTT_TOPIC_DEVICE_STATUS, MQTT_USERNAME, MQTT_PASSWORD
+last_alarm_state = False
 
 def handle_message(client, userdata, message):
+    global last_alarm_state
     topic = message.topic
     data = json.loads(message.payload.decode("utf-8"))
     if topic == MQTT_TOPIC_DATA:
@@ -13,19 +15,23 @@ def handle_message(client, userdata, message):
             data["humidity"],
             data["alarm"]
         )
-        if data["alarm"]:
+        if data["alarm"] and not last_alarm_state:
             settings = get_settings()
-            temp_alarm = data["temperature"] > settings["temp_max"]
-            hum_alarm = data["humidity"] > settings["hum_max"]
+            temperature = data["temperature"]
+            humidity = data["humidity"]
 
-            if temp_alarm and hum_alarm:
-                reason = "HIGH_TEMP_AND_HUM"
-            elif temp_alarm:
-                reason = "HIGH_TEMP"
-            elif hum_alarm:
-                reason = "HIGH_HUM"
-            else:
-                reason = "ALARM"
+            reasons = []
+
+            if temperature < settings["temp_min"]:
+                reasons.append("LOW_TEMP")
+            elif temperature > settings["temp_max"]:
+                reasons.append("HIGH_TEMP")
+            if humidity < settings["hum_min"]:
+                reasons.append("LOW_HUM")
+            elif humidity > settings["hum_max"]:
+                reasons.append("HIGH_HUM")
+
+            reason = "_AND_".join(reasons)
 
             save_alarm_event(
                 data["device"],
@@ -34,6 +40,7 @@ def handle_message(client, userdata, message):
                 reason
             )
             print("Alarm event saved")
+        last_alarm_state = data["alarm"]
         print("Saved measurement:", data)
     elif topic == MQTT_TOPIC_EVENT:
         save_system_event(
@@ -53,7 +60,7 @@ init_database()
 
 client = mqtt.Client()
 client.on_message = handle_message
-
+client.username_pw_set(MQTT_USERNAME, MQTT_PASSWORD)
 client.connect(MQTT_BROKER, MQTT_PORT)
 client.subscribe(MQTT_TOPIC_DATA)
 client.subscribe(MQTT_TOPIC_EVENT)

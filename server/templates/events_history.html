@@ -2,13 +2,13 @@
 <html lang="pl">
   <head>
     <meta charset="UTF-8" />
-    <title>Status 24h</title>
+    <title>Pełna historia zdarzeń systemowych</title>
     <link rel="stylesheet" href="/static/style.css" />
   </head>
 
   <body>
     <header class="topbar">
-      <h1>Status urządzenia z ostatnich 24 godzin</h1>
+      <h1>Pełna historia zdarzeń systemowych</h1>
 
       <div class="topbarright">
         <a class="toplink" href="/">Strona główna</a>
@@ -17,7 +17,7 @@
 
     <main class="dashboard">
       <section class="pagepanel">
-        <h2>Historia statusu urządzenia</h2>
+        <h2>Wszystkie zdarzenia systemowe</h2>
 
         <div class="pagewrapper">
           <table>
@@ -49,13 +49,11 @@
                   endif %}
                 </td>
 
-                <td>{{ row[3][11:16] }}</td>
+                <td>{{ row[3] }}</td>
               </tr>
               {% else %}
               <tr>
-                <td colspan="4">
-                  Brak zdarzeń systemowych z ostatnich 24 godzin
-                </td>
+                <td colspan="4">Brak zapisanych zdarzeń systemowych</td>
               </tr>
               {% endfor %}
             </tbody>

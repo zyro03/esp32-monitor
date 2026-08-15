@@ -2,13 +2,13 @@
 <html lang="pl">
   <head>
     <meta charset="UTF-8" />
-    <title>Pomiary 24h</title>
+    <title>Pełna historia alarmów</title>
     <link rel="stylesheet" href="/static/style.css" />
   </head>
 
   <body>
     <header class="topbar">
-      <h1>Pomiary z ostatnich 24 godzin</h1>
+      <h1>Pełna historia alarmów</h1>
 
       <div class="topbarright">
         <a class="toplink" href="/">Strona główna</a>
@@ -17,7 +17,7 @@
 
     <main class="dashboard">
       <section class="pagepanel">
-        <h2>Historia pomiarów</h2>
+        <h2>Wszystkie alarmy</h2>
 
         <div class="pagewrapper">
           <table>
@@ -27,24 +27,29 @@
                 <th>Urządzenie</th>
                 <th>Temperatura</th>
                 <th>Wilgotność</th>
-                <th>Alarm</th>
+                <th>Powód</th>
                 <th>Czas</th>
               </tr>
             </thead>
 
             <tbody>
-              {% for row in measurements %}
+              {% for row in alarm_events %}
               <tr>
                 <td>{{ row[0] }}</td>
                 <td>{{ row[1] }}</td>
                 <td>{{ row[2] }} °C</td>
                 <td>{{ row[3] }} %</td>
-                <td>{% if row[4] %}Tak{% else %}Nie{% endif %}</td>
+
+                <td>
+                  {% if row[4] == "High temperature or humidity" %} Przekroczony
+                  próg {% else %} {{ row[4] }} {% endif %}
+                </td>
+
                 <td>{{ row[5] }}</td>
               </tr>
               {% else %}
               <tr>
-                <td colspan="6">Brak pomiarów z ostatnich 24 godzin</td>
+                <td colspan="6">Brak zapisanych alarmów</td>
               </tr>
               {% endfor %}
             </tbody>

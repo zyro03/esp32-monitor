@@ -9,7 +9,6 @@
 #define MQTT_CLIENT_ID "esp32_nr1"
 
 #define MQTT_TOPIC_DATA "esp32/" DEVICE_ID "/data"
-#define MQTT_TOPIC_STATUS "esp32/" DEVICE_ID "/status"
 #define MQTT_TOPIC_CONFIG "esp32/" DEVICE_ID "/config"
 #define MQTT_TOPIC_EVENT "esp32/" DEVICE_ID "/event"
 #define MQTT_TOPIC_DEVICE_STATUS "esp32/" DEVICE_ID "/device_status"
@@ -19,14 +18,19 @@ PubSubClient mqttClient(espClient);
 
 extern float temperature;
 extern float humidity;
+
+extern float tempMin;
 extern float tempMax;
+
+extern float humMin;
 extern float humMax;
+
 extern String powerSource;
 extern String workMode;
 
 void connectWIFI()
 {
-  Serial.print("Connecting to WiFi");
+  Serial.print("[WIFI] Connecting");
 
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
 
@@ -40,12 +44,15 @@ void connectWIFI()
   }
   if (WiFi.status() == WL_CONNECTED)
   {
-    Serial.print("WiFi connected, ESP32 IP: ");
+    Serial.println();
+    Serial.print("[WIFI] Connected | IP: ");
     Serial.println(WiFi.localIP());
   }
   else
   {
-    Serial.println("WiFi connection failed");
+    Serial.println();
+    Serial.print("[WIFI] Connection failed | status=");
+    Serial.println(WiFi.status());
   }
 }
 
@@ -55,7 +62,7 @@ void checkWIFI()
   {
     return;
   }
-  Serial.println("WI-Fi disconnected");
+  Serial.println("[WIFI] Disconnected");
   connectWIFI();
 }
 
@@ -69,13 +76,20 @@ void publishDeviceStatus()
   doc["device"] = DEVICE_ID;
   doc["power_source"] = powerSource;
   doc["work_mode"] = workMode;
-  doc["wifi_status"] = WiFi.status() == WL_CONNECTED;
-  doc["mqtt_status"] = mqttClient.connected();
+  if (workMode == "deep_sleep")
+  {
+    doc["wifi_status"] = false;
+    doc["mqtt_status"] = false;
+  }
+  else
+  {
+    doc["wifi_status"] = true;
+    doc["mqtt_status"] = true;
+  }
   char payload[192];
   serializeJson(doc, payload);
   mqttClient.publish(MQTT_TOPIC_DEVICE_STATUS, payload);
-  Serial.print("MQTT device status sent: ");
-  Serial.println(payload);
+  Serial.println("[MQTT] Device status sent");
 }
 
 void publishSystemEvent(const char *eventType, const char *message)
@@ -91,39 +105,42 @@ void publishSystemEvent(const char *eventType, const char *message)
   char payload[160];
   serializeJson(doc, payload);
   mqttClient.publish(MQTT_TOPIC_EVENT, payload);
-  Serial.print("MQTT event sent: ");
-  Serial.println(payload);
+  Serial.print("[MQTT] Event sent: ");
+  Serial.println(eventType);
 }
 
 void connectMQTT()
 {
   mqttClient.setServer(MQTT_SERVER, MQTT_PORT);
   int attempts = 0;
+
   while (!mqttClient.connected() && attempts < 5)
   {
-    Serial.print("Connecting to MQTT");
-    if (mqttClient.connect(MQTT_CLIENT_ID, MQTT_TOPIC_STATUS, 0, true,
-                           "offline"))
+    if (mqttClient.connect(
+            MQTT_CLIENT_ID,
+            MQTT_USERNAME,
+            MQTT_PASSWORD))
     {
-      Serial.println("MQTT connected");
-
-      mqttClient.publish(MQTT_TOPIC_STATUS, "online", true);
+      Serial.println("[MQTT] Connected");
       mqttClient.subscribe(MQTT_TOPIC_CONFIG);
-      Serial.println("MQTT status sent and topic subscribed");
+      Serial.println("[MQTT] Config topic subscribed");
+
       publishSystemEvent("MQTT_CONNECTED", "MQTT connection");
       publishDeviceStatus();
     }
     else
     {
-      Serial.print("failed, ");
+      Serial.print("[MQTT] Connection failed | state=");
       Serial.println(mqttClient.state());
+
       attempts++;
       delay(2000);
     }
   }
+
   if (!mqttClient.connected())
   {
-    Serial.println("MQTT connection failed");
+    Serial.println("[MQTT] Connection unavailable");
   }
 }
 
@@ -133,7 +150,7 @@ void checkMQTT()
   {
     return;
   }
-  Serial.println("MQTT disconnected");
+  Serial.println("[MQTT] Disconnected");
   connectMQTT();
 }
 
@@ -151,8 +168,7 @@ void publishMeasurements(bool alarmStatus)
   char payload[128];
   serializeJson(doc, payload);
   mqttClient.publish(MQTT_TOPIC_DATA, payload);
-  Serial.print("MQTT data sent: ");
-  Serial.println(payload);
+  Serial.println("[MQTT] Measurement sent");
 }
 
 void handleMqttMessage(char *topic, byte *payload, unsigned int length)
@@ -164,35 +180,36 @@ void handleMqttMessage(char *topic, byte *payload, unsigned int length)
   JsonDocument doc;
   if (deserializeJson(doc, payload, length))
   {
-    Serial.println("fault");
+    Serial.println("[MQTT] Invalid configuration JSON");
     return;
   }
+  tempMin = doc["temp_min"];
   tempMax = doc["temp_max"];
+  humMin = doc["hum_min"];
   humMax = doc["hum_max"];
-  Serial.println("new config rec");
+  Serial.println("[MQTT] New alarm thresholds received");
 }
 
 void initNetwork()
 {
-    mqttClient.setCallback(handleMqttMessage);
+  mqttClient.setCallback(handleMqttMessage);
 }
 bool isWiFiConnected()
 {
-    return WiFi.status() == WL_CONNECTED;
+  return WiFi.status() == WL_CONNECTED;
 }
 bool isMQTTConnected()
 {
-    return mqttClient.connected();
+  return mqttClient.connected();
 }
 void processMQTT()
 {
-    if(mqttClient.connected()){
-        mqttClient.loop();
-    }
-}
-void disconnectMQTTForSleep(){
-    mqttClient.publish(MQTT_TOPIC_STATUS, "offline", true);
+  if (mqttClient.connected())
+  {
     mqttClient.loop();
-    delay(200);
-    mqttClient.disconnect();
+  }
+}
+void disconnectMQTTForSleep()
+{
+  mqttClient.disconnect();
 }
