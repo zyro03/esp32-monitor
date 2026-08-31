@@ -47,8 +47,10 @@
                   siecią Wi-Fi {% elif row[1] == "MQTT_CONNECTED" %} Połączono z
                   brokerem MQTT {% elif row[1] == "START" %} Uruchomiono
                   urządzenie {% elif row[1] == "ALARM_ON" %} Alarm został
-                  aktywowany {% elif row[1] == "ALARM_OFF" %} Alarm zakończony –
-                  parametry wróciły do normy {% else %} {{ row[2] }} {% endif %}
+                  aktywowany {% elif row[1] == "CONFIG_UPDATED" %}
+                  Zaktualizowano progi alarmowe{% elif row[1] == "ALARM_OFF" %}
+                  Alarm zakończony – parametry wróciły do normy {% else %} {{
+                  row[2] }} {% endif %}
                 </td>
 
                 <td>{{ row[3] }}</td>

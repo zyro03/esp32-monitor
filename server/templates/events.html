@@ -3,13 +3,13 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Status 24h</title>
+    <title>Zdarzenia 24h</title>
     <link rel="stylesheet" href="/static/style.css" />
   </head>
 
   <body>
     <header class="topbar">
-      <h1>Status urządzenia z ostatnich 24 godzin</h1>
+      <h1>Zdarzenia z ostatnich 24 godzin</h1>
 
       <div class="topbarright">
         <a class="toplink" href="/">Strona główna</a>
@@ -18,7 +18,7 @@
 
     <main class="dashboard">
       <section class="pagepanel">
-        <h2>Historia statusu urządzenia</h2>
+        <h2>Historia zdarzeń systemowych</h2>
 
         <div class="pagewrapper">
           <table>
@@ -44,11 +44,13 @@
                   "DEEP_SLEEP_ENTER" %} Urządzenie przechodzi w tryb uśpienia {%
                   elif row[1] == "WAKE_UP" %} Urządzenie wybudziło się z trybu
                   uśpienia {% elif row[1] == "WIFI_CONNECTED" %} Połączono z
-                  siecią Wi-Fi {% elif row[1] == "MQTT_CONNECTED" %} Połączono z
-                  brokerem MQTT {% elif row[1] == "START" %} Uruchomiono
-                  urządzenie {% elif row[1] == "ALARM_ON" %} Alarm został
-                  aktywowany {% elif row[1] == "ALARM_OFF" %} Alarm zakończony –
-                  parametry wróciły do normy {% else %} {{ row[2] }} {% endif %}
+                  siecią Wi-Fi {% elif row[1] == "CONFIG_UPDATED" %}
+                  Zaktualizowano progi alarmowe{% elif row[1] ==
+                  "MQTT_CONNECTED" %} Połączono z brokerem MQTT {% elif row[1]
+                  == "START" %} Uruchomiono urządzenie {% elif row[1] ==
+                  "ALARM_ON" %} Alarm został aktywowany {% elif row[1] ==
+                  "ALARM_OFF" %} Alarm zakończony – parametry wróciły do normy
+                  {% else %} {{ row[2] }} {% endif %}
                 </td>
 
                 <td>{{ row[3][11:16] }}</td>

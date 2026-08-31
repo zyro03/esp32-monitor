@@ -9,7 +9,9 @@
 
   <body>
     <header class="topbar">
-      <h1>Bezprzewodowy system monitorowania warunków środowiskowych</h1>
+      <h1>
+        [ESP32] - Bezprzewodowy system monitorowania warunków środowiskowych
+      </h1>
 
       <div class="topbarright">
         <span id="clock">--:--:--</span>
@@ -48,11 +50,8 @@
 
             <div class="statusitem">
               <span>Tryb pracy</span>
-
-              {% if device_status %} {% if device_status[3] == "normal" %}
+              {% if device_status %} {% if device_status[3] == "active" %}
               <strong>Tryb normalny</strong>
-              {% elif device_status[3] == "battery" %}
-              <strong>Tryb bateryjny</strong>
               {% elif device_status[3] == "deep_sleep" %}
               <strong>Tryb uśpienia</strong>
               {% else %}
@@ -64,23 +63,25 @@
 
             <div class="statusitem">
               <span>Wi-Fi</span>
-              {% if device_status %} {% if device_status[4] %}
+
+              {% if not device_online %}
+              <strong>Brak połączenia</strong>
+              {% elif device_status and device_status[4] %}
               <strong>Połączono</strong>
               {% else %}
               <strong>Rozłączono</strong>
-              {% endif %} {% else %}
-              <strong>Brak danych</strong>
               {% endif %}
             </div>
 
             <div class="statusitem">
               <span>MQTT</span>
-              {% if device_status %} {% if device_status[5] %}
+
+              {% if not device_online %}
+              <strong>Brak połączenia</strong>
+              {% elif device_status and device_status[5] %}
               <strong>Połączono</strong>
               {% else %}
               <strong>Rozłączono</strong>
-              {% endif %} {% else %}
-              <strong>Brak danych</strong>
               {% endif %}
             </div>
 
@@ -341,8 +342,9 @@
                     %} Połączono z brokerem MQTT {% elif row[1] == "START" %}
                     Uruchomiono urządzenie {% elif row[1] == "ALARM_ON" %} Alarm
                     został aktywowany {% elif row[1] == "ALARM_OFF" %} Alarm
-                    zakończony – parametry wróciły do normy {% else %} {{ row[2]
-                    }} {% endif %}
+                    zakończony – parametry wróciły do normy {% elif row[1] ==
+                    "CONFIG_UPDATED" %} Zaktualizowano progi alarmowe{% else %}
+                    {{ row[2] }} {% endif %}
                   </td>
                   <td>{{ row[3][11:16] }}</td>
                 </tr>
@@ -368,7 +370,7 @@
       serwerem aplikacji webowej.
     </footer>
 
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="/static/chart.umd.min.js"></script>
     <script src="/static/app.js"></script>
   </body>
 </html>

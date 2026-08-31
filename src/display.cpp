@@ -27,14 +27,6 @@ void lcdMeasurements()
     lcd.print(" %  ");
 }
 
-void lcdSensorError()
-{
-    lcd.setCursor(0, 0);
-    lcd.print("BLAD CZUJNIKA   ");
-    lcd.setCursor(0, 1);
-    lcd.print("DHT22           ");
-}
-
 void lcdAlarm()
 {
     bool tempLow = temperature < tempMin;

@@ -226,6 +226,9 @@ void handleMqttMessage(char *topic, byte *payload, unsigned int length)
   humMin = doc["hum_min"];
   humMax = doc["hum_max"];
   Serial.println("[MQTT] New alarm thresholds");
+  publishSystemEvent(
+    "CONFIG_UPDATED",
+    "Alarm thresholds updated");
 }
 
 void initNetwork()

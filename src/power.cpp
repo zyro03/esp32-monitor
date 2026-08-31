@@ -1,5 +1,5 @@
 #include "power.h"
-
+#include "alarm.h"
 #include "display.h"
 #include "network.h"
 
@@ -14,7 +14,7 @@ extern bool wasOnBattery;
 extern String powerSource;
 extern String workMode;
 
-void alarmOFF();
+
 
 void initPower()
 {
@@ -30,14 +30,12 @@ void updatePowerStatus()
   if (mainPowerPresent)
   {
     powerSource = "main";
-    workMode = "normal";
-    Serial.println("[POWER] MAIN");
+    workMode = "active";
   }
   else
   {
     powerSource = "battery";
-    workMode = "battery";
-    Serial.println("[POWER] BATTERY");
+    workMode = "active";
   }
 
   if (mainPowerPresent != lastMainPowerState)
@@ -66,6 +64,9 @@ void enterDeepSleep()
   publishSystemEvent("DEEP_SLEEP_ENTER", "ESP32 entering deep sleep");
 
   publishDeviceStatus();
+
+  processMQTT();
+  delay(300);
 
   disconnectMQTTForSleep();
 

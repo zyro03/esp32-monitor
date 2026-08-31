@@ -8,19 +8,18 @@
 
 float temperature = 0.0;
 float humidity = 0.0;
-
 float tempMin = 10.0;
 float tempMax = 40.0;
-
 float humMin = 10.0;
 float humMax = 70.0;
-
 bool statusScreen = false;
 bool startEventPending = false;
+bool wakeEventPending = false;
 RTC_DATA_ATTR bool wasOnBattery = false;
-
 String powerSource = "main";
-String workMode = "normal";
+String workMode = "active";
+unsigned long lastMeasurementTime = 0;
+const unsigned long measurementInterval = 30000;
 
 void setup()
 {
@@ -34,33 +33,46 @@ void setup()
   {
     Serial.println("[SLEEP] Wake up from timer");
   }
+
   initDisplay();
   initSensor();
   initAlarm();
   initPower();
 
+  updatePowerStatus();
+
+  if (powerSource == "battery")
+  {
+    Serial.println("[POWER] Battery detected");
+    enterDeepSleep();
+  }
+
   initNetwork();
   connectWIFI();
-  updatePowerStatus();
 
   if (isWiFiConnected())
   {
     connectMQTT();
   }
-  if (wakeupCause == ESP_SLEEP_WAKEUP_TIMER && isMQTTConnected())
+  if (wakeupCause == ESP_SLEEP_WAKEUP_TIMER)
   {
-    publishSystemEvent("WAKE_UP", "ESP32 woke up from deep sleep");
-  }
-  if (powerSource == "main" && wasOnBattery && isMQTTConnected())
-  {
-    publishSystemEvent("POWER_RESTORED", "Main power restored");
-    publishDeviceStatus();
-    wasOnBattery = false;
+    wakeEventPending = true;
   }
 }
 
 void loop()
 {
+  updatePowerStatus();
+  if (powerSource == "battery")
+  {
+    bool sensorStatus = readSensor();
+    if (sensorStatus && isMQTTConnected())
+    {
+      bool alarmStatus = checkAlarm();
+      publishMeasurements(alarmStatus);
+    }
+    enterDeepSleep();
+  }
   checkWIFI();
   if (isWiFiConnected())
   {
@@ -74,23 +86,34 @@ void loop()
         "ESP32 started");
     startEventPending = false;
   }
-  updatePowerStatus();
-  if (powerSource == "battery")
+  if (wakeEventPending && isMQTTConnected())
   {
-    bool sensorStatus = readSensor();
-    if (sensorStatus && isMQTTConnected())
-    {
-      bool alarmStatus = checkAlarm();
-      publishMeasurements(alarmStatus);
-    }
-    enterDeepSleep();
+    publishSystemEvent(
+        "WAKE_UP",
+        "ESP32 woke up from deep sleep");
+    wakeEventPending = false;
   }
+  if (powerSource == "main" && wasOnBattery && isMQTTConnected())
+  {
+    publishSystemEvent(
+        "POWER_RESTORED",
+        "Main power restored");
+    publishDeviceStatus();
+    wasOnBattery = false;
+  }
+  if (millis() - lastMeasurementTime >= measurementInterval)
+{
+  lastMeasurementTime = millis();
   bool sensorStatus = readSensor();
 
   if (!sensorStatus)
   {
-    alarmOFF();
-    lcdSensorError();
+      alarmOFF();
+
+      if (isMQTTConnected())
+      {
+          publishDeviceStatus();
+      }
   }
   else
   {
@@ -138,5 +161,6 @@ void loop()
       statusScreen = !statusScreen;
     }
   }
-  delay(5000);
+}
+  delay(100);
 }

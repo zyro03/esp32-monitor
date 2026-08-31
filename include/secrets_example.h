@@ -1,10 +1,10 @@
 #pragma once
 
-const char *MQTT_USERNAME = "esp32";
-const char *MQTT_PASSWORD = "abc123";
+const char *WIFI_SSID = "siec_wifi";
+const char *WIFI_PASSWORD = "haslo_wifi";
 
-const char *WIFI_SSID = "x";
-const char *WIFI_PASSWORD = "x";
-
-const char *MQTT_SERVER = "x";
+const char *MQTT_SERVER = "adres";
 const int MQTT_PORT = 1883;
+
+#define MQTT_USERNAME "esp32"
+#define MQTT_PASSWORD "haslo_mqtt"

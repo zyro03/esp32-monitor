@@ -1,19 +1,30 @@
-ESP32 Monitor
+# ESP32 Monitor
 
 Projekt przedstawia prototyp systemu monitorowania temperatury i wilgotności z wykorzystaniem ESP32, czujnika DHT22, komunikacji MQTT, serwera Flask oraz bazy SQLite.
 
-Uruchomienie
+## Uruchomienie
 
-1. Uruchom broker Mosquitto z przygotowanym plikiem konfiguracyjnym.
-2. Przejdź do katalogu server i aktywuj środowisko wirtualne:
+1. Uruchom broker Mosquitto z plikiem `mosquitto.conf`.
 
+Windows:
+& "C:\Program Files\mosquitto\mosquitto.exe" -c "C:\ścieżka\do\esp32-monitor\README\mosquitto.conf" -v
+
+macOS:
+mosquitto -c /ścieżka/do/esp32-monitor/README/mosquitto.conf -v
+
+2. Przejdź do katalogu `server` i aktywuj środowisko wirtualne.
+
+Windows:
+.\venv\Scripts\Activate.ps1
+
+macOS:
 source venv/bin/activate
 
-3. Uruchom klienta MQTT odpowiedzialnego za odbieranie danych z ESP32 i zapis do bazy:
+3. Uruchom klienta MQTT:
 
 python mqtt_client.py
 
-4. W drugim terminalu, również w katalogu server, uruchom aplikację Flask:
+4. W drugim terminalu uruchom aplikację Flask:
 
 python app.py
 
@@ -21,6 +32,6 @@ python app.py
 
 http://127.0.0.1:5001
 
-Przed uruchomieniem należy przygotować pliki secrets.h oraz config.py na podstawie dołączonych plików przykładowych i uzupełnić je o dane sieci Wi-Fi, adres brokera MQTT oraz dane logowania.
+Przed uruchomieniem należy przygotować pliki `secrets.h` oraz `config.py` na podstawie dołączonych plików przykładowych i uzupełnić dane sieci Wi-Fi, brokera MQTT oraz dane logowania.
 
-Firmware ESP32 należy skompilować i wgrać za pomocą PlatformIO. Po uruchomieniu urządzenie automatycznie łączy się z Wi-Fi i brokerem MQTT, wykonuje pomiary oraz przesyła je do części serwerowej.
+Firmware ESP32 należy skompilować i wgrać za pomocą PlatformIO. Po uruchomieniu urządzenie automatycznie łączy się z Wi-Fi i brokerem MQTT, wykonuje pomiary i przesyła dane do części serwerowej.
