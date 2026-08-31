@@ -19,42 +19,71 @@ void lcdMeasurements()
     lcd.setCursor(0, 0);
     lcd.print("Temp:   ");
     lcd.print(temperature, 1);
-    lcd.print(" C ");
+    lcd.print(" C  ");
 
     lcd.setCursor(0, 1);
     lcd.print("Wilg:   ");
     lcd.print(humidity, 1);
-    lcd.print(" % ");
+    lcd.print(" %  ");
 }
 
 void lcdSensorError()
 {
     lcd.setCursor(0, 0);
-    lcd.print("BLAD CZUJNIKA");
+    lcd.print("BLAD CZUJNIKA   ");
     lcd.setCursor(0, 1);
-    lcd.print("DHT22");
+    lcd.print("DHT22           ");
 }
 
 void lcdAlarm()
 {
+    bool tempLow = temperature < tempMin;
+    bool tempHigh = temperature > tempMax;
+
+    bool humLow = humidity < humMin;
+    bool humHigh = humidity > humMax;
+
+    bool tempAlarm = tempLow || tempHigh;
+    bool humAlarm = humLow || humHigh;
+
     lcd.setCursor(0, 0);
     lcd.print("ALARM!          ");
 
     lcd.setCursor(0, 1);
 
-    if (temperature < tempMin)
+    if (tempAlarm && humAlarm)
+    {
+        if (tempLow)
+        {
+            lcd.print("T:NIS ");
+        }
+        else
+        {
+            lcd.print("T:WYS ");
+        }
+
+        if (humLow)
+        {
+            lcd.print("H:NIS     ");
+        }
+        else
+        {
+            lcd.print("H:WYS     ");
+        }
+    }
+    else if (tempLow)
     {
         lcd.print("TEMP ZA NISKA   ");
     }
-    else if (temperature > tempMax)
+    else if (tempHigh)
     {
         lcd.print("TEMP ZA WYSOKA  ");
     }
-    else if (humidity < humMin)
+    else if (humLow)
     {
         lcd.print("WILG ZA NISKA   ");
     }
-    else if (humidity > humMax)
+    else if (humHigh)
     {
         lcd.print("WILG ZA WYSOKA  ");
     }
@@ -109,11 +138,6 @@ void lcdStatus()
     {
         lcd.print("MQTT: BRAK      ");
     }
-}
-
-void clearDisplay()
-{
-    lcd.clear();
 }
 
 void disableDisplay()

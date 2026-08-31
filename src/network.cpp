@@ -15,6 +15,7 @@
 
 WiFiClient espClient;
 PubSubClient mqttClient(espClient);
+bool wifiEventPending = false;
 
 extern float temperature;
 extern float humidity;
@@ -47,6 +48,7 @@ void connectWIFI()
     Serial.println();
     Serial.print("[WIFI] Connected | IP: ");
     Serial.println(WiFi.localIP());
+    wifiEventPending = true;
   }
   else
   {
@@ -126,11 +128,16 @@ void connectMQTT()
       Serial.println("[MQTT] Config topic subscribed");
 
       publishSystemEvent("MQTT_CONNECTED", "MQTT connection");
+      if (wifiEventPending)
+      {
+        publishSystemEvent("WIFI_CONNECTED", "WiFi connection");
+        wifiEventPending = false;
+      }
       publishDeviceStatus();
     }
     else
     {
-      Serial.print("[MQTT] Connection failed | state=");
+      Serial.print("[MQTT] Connection failed");
       Serial.println(mqttClient.state());
 
       attempts++;
@@ -160,12 +167,35 @@ void publishMeasurements(bool alarmStatus)
   {
     return;
   }
+  String alarmReason = "";
+  if (alarmStatus)
+  {
+    if (temperature < tempMin)
+      alarmReason += "LOW_TEMP";
+    else if (temperature > tempMax)
+      alarmReason += "HIGH_TEMP";
+    if (humidity < humMin)
+    {
+      if (alarmReason != "")
+        alarmReason += "_AND_";
+
+      alarmReason += "LOW_HUM";
+    }
+    else if (humidity > humMax)
+    {
+      if (alarmReason != "")
+        alarmReason += "_AND_";
+
+      alarmReason += "HIGH_HUM";
+    }
+  }
   JsonDocument doc;
   doc["device"] = DEVICE_ID;
   doc["temperature"] = temperature;
   doc["humidity"] = humidity;
   doc["alarm"] = alarmStatus;
-  char payload[128];
+  doc["alarm_reason"] = alarmReason;
+  char payload[160];
   serializeJson(doc, payload);
   mqttClient.publish(MQTT_TOPIC_DATA, payload);
   Serial.println("[MQTT] Measurement sent");
@@ -183,11 +213,19 @@ void handleMqttMessage(char *topic, byte *payload, unsigned int length)
     Serial.println("[MQTT] Invalid configuration JSON");
     return;
   }
+  if (!doc["temp_min"].is<float>() ||
+      !doc["temp_max"].is<float>() ||
+      !doc["hum_min"].is<float>() ||
+      !doc["hum_max"].is<float>())
+  {
+    Serial.println("[MQTT] Missing or invalid configuration");
+    return;
+  }
   tempMin = doc["temp_min"];
   tempMax = doc["temp_max"];
   humMin = doc["hum_min"];
   humMax = doc["hum_max"];
-  Serial.println("[MQTT] New alarm thresholds received");
+  Serial.println("[MQTT] New alarm thresholds");
 }
 
 void initNetwork()

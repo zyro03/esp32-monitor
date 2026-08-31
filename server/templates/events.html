@@ -2,6 +2,7 @@
 <html lang="pl">
   <head>
     <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Status 24h</title>
     <link rel="stylesheet" href="/static/style.css" />
   </head>
@@ -42,11 +43,12 @@
                   Przywrócono zasilanie główne {% elif row[1] ==
                   "DEEP_SLEEP_ENTER" %} Urządzenie przechodzi w tryb uśpienia {%
                   elif row[1] == "WAKE_UP" %} Urządzenie wybudziło się z trybu
-                  uśpienia {% elif row[1] == "SENSOR_ERROR" %} Nie udało się
-                  odczytać danych z czujnika {% elif row[1] == "SENSOR_RESTORED"
-                  %} Czujnik ponownie działa poprawnie {% elif row[1] ==
-                  "MQTT_CONNECTED" %} Połączono MQTT {% else %} {{ row[2] }} {%
-                  endif %}
+                  uśpienia {% elif row[1] == "WIFI_CONNECTED" %} Połączono z
+                  siecią Wi-Fi {% elif row[1] == "MQTT_CONNECTED" %} Połączono z
+                  brokerem MQTT {% elif row[1] == "START" %} Uruchomiono
+                  urządzenie {% elif row[1] == "ALARM_ON" %} Alarm został
+                  aktywowany {% elif row[1] == "ALARM_OFF" %} Alarm zakończony –
+                  parametry wróciły do normy {% else %} {{ row[2] }} {% endif %}
                 </td>
 
                 <td>{{ row[3][11:16] }}</td>
@@ -63,6 +65,5 @@
         </div>
       </section>
     </main>
-    <script src="/static/app.js"></script>
   </body>
 </html>

@@ -303,3 +303,19 @@ td {
 .offline {
   color: #dc3545 !important;
 }
+
+.toplink {
+  text-decoration: none;
+  color: inherit;
+  font-weight: 600;
+}
+
+.pagepanel {
+  background: white;
+  padding: 20px;
+  border-radius: 12px;
+}
+
+.pagewrapper {
+  overflow-x: auto;
+}

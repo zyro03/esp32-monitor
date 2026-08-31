@@ -10,14 +10,14 @@ float temperature = 0.0;
 float humidity = 0.0;
 
 float tempMin = 10.0;
-float tempMax = 30.0;
+float tempMax = 40.0;
 
-float humMin = 30.0;
+float humMin = 10.0;
 float humMax = 70.0;
 
 bool statusScreen = false;
+bool startEventPending = false;
 RTC_DATA_ATTR bool wasOnBattery = false;
-RTC_DATA_ATTR bool sensorErrorActive = false;
 
 String powerSource = "main";
 String workMode = "normal";
@@ -26,6 +26,10 @@ void setup()
 {
   Serial.begin(115200);
   esp_sleep_wakeup_cause_t wakeupCause = esp_sleep_get_wakeup_cause();
+  if (wakeupCause != ESP_SLEEP_WAKEUP_TIMER)
+  {
+    startEventPending = true;
+  }
   if (wakeupCause == ESP_SLEEP_WAKEUP_TIMER)
   {
     Serial.println("[SLEEP] Wake up from timer");
@@ -63,6 +67,13 @@ void loop()
     checkMQTT();
   }
   processMQTT();
+  if (startEventPending && isMQTTConnected())
+  {
+    publishSystemEvent(
+        "START",
+        "ESP32 started");
+    startEventPending = false;
+  }
   updatePowerStatus();
   if (powerSource == "battery")
   {
@@ -80,19 +91,9 @@ void loop()
   {
     alarmOFF();
     lcdSensorError();
-    if (!sensorErrorActive && isMQTTConnected())
-    {
-      publishSystemEvent("SENSOR_ERROR", "DHT22 read failed");
-    }
-    sensorErrorActive = true;
   }
   else
   {
-    if (sensorErrorActive && isMQTTConnected())
-    {
-      publishSystemEvent("SENSOR_RESTORED", "DHT22 restored");
-    }
-    sensorErrorActive = false;
     Serial.print("[SENSOR] T=");
     Serial.print(temperature, 1);
     Serial.print(" C | H=");
@@ -137,5 +138,5 @@ void loop()
       statusScreen = !statusScreen;
     }
   }
-  delay(3000);
+  delay(5000);
 }

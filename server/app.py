@@ -79,15 +79,14 @@ def index():
     settings = get_settings()
     system_events = get_latest_system_events()
     device_status = get_latest_device_status()
-    device_online = False
 
+    device_online = False
     if device_status:
         last_update = datetime.strptime(
-            device_status[6],
-            "%Y-%m-%d %H:%M:%S")
-    difference = datetime.now() - last_update
-    if difference.total_seconds() < 120:
-        device_online = True
+            device_status[6], "%Y-%m-%d %H:%M:%S")
+        difference = datetime.now() - last_update
+        if difference.total_seconds() < 120:
+            device_online = True
 
     return render_template(
         "index.html",
@@ -103,14 +102,35 @@ def index():
 def settings():
     if not session.get("logged_in"):
         return redirect("/login")
-    temp_min = float(request.form["temp_min"])
-    temp_max = float(request.form["temp_max"])
-    hum_min = float(request.form["hum_min"])
-    hum_max = float(request.form["hum_max"])
-
-    success = publish_config(temp_min, temp_max, hum_min, hum_max)
+    try:
+        temp_min = float(request.form["temp_min"])
+        temp_max = float(request.form["temp_max"])
+        hum_min = float(request.form["hum_min"])
+        hum_max = float(request.form["hum_max"])
+    except (KeyError, ValueError):
+        print("[SETTINGS] Invalid form data")
+        return redirect("/")
+    if not (-40.0 <= temp_min < temp_max <= 80.0):
+        print("[SETTINGS] Invalid temperature range")
+        return redirect("/")
+    if not (0.0 <= hum_min < hum_max <= 100.0):
+        print("[SETTINGS] Invalid humidity range")
+        return redirect("/")
+    success = publish_config(
+        temp_min,
+        temp_max,
+        hum_min,
+        hum_max
+    )
     if success:
-        update_settings(temp_min, temp_max, hum_min, hum_max)
+        update_settings(
+            temp_min,
+            temp_max,
+            hum_min,
+            hum_max
+        )
+    else:
+        print("[SETTINGS] MQTT configuration publish failed")
     return redirect("/")
 
 @app.route("/measurements")
@@ -140,7 +160,7 @@ def alarms_page():
 
 
 @app.route("/events")
-def status_page():
+def events_page():
     if not session.get("logged_in"):
         return redirect("/login")
     system_events = get_system_events_last_24h()
@@ -173,32 +193,32 @@ def chart_data():
 
 @app.route("/measurements/history")
 def measurements_history():
+    if not session.get("logged_in"):
+        return redirect("/login")
     measurements = get_all_measurements()
-
     return render_template(
         "measurements_history.html",
-        measurements=measurements
-    )
+        measurements=measurements)
 
 
 @app.route("/alarms/history")
 def alarms_history():
+    if not session.get("logged_in"):
+        return redirect("/login")
     alarm_events = get_all_alarm_events()
-
     return render_template(
         "alarms_history.html",
-        alarm_events=alarm_events
-    )
+        alarm_events=alarm_events)
 
 
 @app.route("/events/history")
 def events_history():
+    if not session.get("logged_in"):
+        return redirect("/login")
     system_events = get_all_system_events()
-
     return render_template(
         "events_history.html",
-        system_events=system_events
-    )
+        system_events=system_events)
 
 if __name__ == "__main__":
     init_database()

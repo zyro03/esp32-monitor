@@ -158,6 +158,8 @@
               <input
                 type="number"
                 step="0.1"
+                min="-40"
+                max="80"
                 id="temp_min"
                 name="temp_min"
                 value="{{ settings['temp_min'] }}"
@@ -170,6 +172,8 @@
               <input
                 type="number"
                 step="0.1"
+                min="-40"
+                max="80"
                 id="temp_max"
                 name="temp_max"
                 value="{{ settings['temp_max'] }}"
@@ -182,6 +186,8 @@
               <input
                 type="number"
                 step="0.1"
+                min="0"
+                max="100"
                 id="hum_min"
                 name="hum_min"
                 value="{{ settings['hum_min'] }}"
@@ -194,6 +200,8 @@
               <input
                 type="number"
                 step="0.1"
+                min="0"
+                max="100"
                 id="hum_max"
                 name="hum_max"
                 value="{{ settings['hum_max'] }}"
@@ -275,8 +283,16 @@
                   <td>{{ row[2] }} °C</td>
                   <td>{{ row[3] }} %</td>
                   <td>
-                    {% if row[4] == "High temperature or humidity" %}
-                    Przekroczony próg {% else %} {{ row[4] }} {% endif %}
+                    {% if row[4] == "LOW_TEMP" %} Temperatura poniżej minimum {%
+                    elif row[4] == "HIGH_TEMP" %} Temperatura powyżej maksimum
+                    {% elif row[4] == "LOW_HUM" %} Wilgotność poniżej minimum {%
+                    elif row[4] == "HIGH_HUM" %} Wilgotność powyżej maksimum {%
+                    elif row[4] == "LOW_TEMP_AND_LOW_HUM" %} Niska temperatura i
+                    wilgotność {% elif row[4] == "LOW_TEMP_AND_HIGH_HUM" %}
+                    Niska temperatura i wysoka wilgotność {% elif row[4] ==
+                    "HIGH_TEMP_AND_LOW_HUM" %} Wysoka temperatura i niska
+                    wilgotność {% elif row[4] == "HIGH_TEMP_AND_HIGH_HUM" %}
+                    Wysoka temperatura i wilgotność {% else %} Alarm {% endif %}
                   </td>
                   <td>{{ row[5][11:16] }}</td>
                 </tr>
@@ -320,11 +336,13 @@
                     Przywrócono zasilanie główne {% elif row[1] ==
                     "DEEP_SLEEP_ENTER" %} Urządzenie przechodzi w tryb uśpienia
                     {% elif row[1] == "WAKE_UP" %} Urządzenie wybudziło się z
-                    trybu uśpienia {% elif row[1] == "SENSOR_ERROR" %} Nie udało
-                    się odczytać danych z czujnika {% elif row[1] ==
-                    "SENSOR_RESTORED" %} Czujnik ponownie działa poprawnie {%
-                    elif row[1] == "MQTT_CONNECTED" %} Połączono MQTT {% else %}
-                    {{ row[2] }} {% endif %}
+                    trybu uśpienia {% elif row[1] == "WIFI_CONNECTED" %}
+                    Połączono z siecią Wi-Fi {% elif row[1] == "MQTT_CONNECTED"
+                    %} Połączono z brokerem MQTT {% elif row[1] == "START" %}
+                    Uruchomiono urządzenie {% elif row[1] == "ALARM_ON" %} Alarm
+                    został aktywowany {% elif row[1] == "ALARM_OFF" %} Alarm
+                    zakończony – parametry wróciły do normy {% else %} {{ row[2]
+                    }} {% endif %}
                   </td>
                   <td>{{ row[3][11:16] }}</td>
                 </tr>

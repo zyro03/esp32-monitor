@@ -6,5 +6,4 @@ void lcdStatus();
 void lcdSensorError();
 void lcdAlarm();
 void lcdBatterySleep();
-void clearDisplay();
 void disableDisplay();

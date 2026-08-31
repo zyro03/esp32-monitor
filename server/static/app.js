@@ -42,5 +42,9 @@ if (chartElement) {
     });
 }
 setInterval(function () {
-  window.location.reload();
-}, 10000);
+  const active = document.activeElement;
+
+  if (active.tagName !== "INPUT") {
+    window.location.reload();
+  }
+}, 30000);

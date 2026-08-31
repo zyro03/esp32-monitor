@@ -2,6 +2,7 @@
 <html lang="pl">
   <head>
     <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Alarmy 24h</title>
     <link rel="stylesheet" href="/static/style.css" />
   </head>
@@ -40,8 +41,16 @@
                 <td>{{ row[2] }} °C</td>
                 <td>{{ row[3] }} %</td>
                 <td>
-                  {% if row[4] == "High temperature or humidity" %} Przekroczona
-                  temperatura lub wilgotność {% else %} {{ row[4] }} {% endif %}
+                  {% if row[4] == "LOW_TEMP" %} Temperatura poniżej minimum {%
+                  elif row[4] == "HIGH_TEMP" %} Temperatura powyżej maksimum {%
+                  elif row[4] == "LOW_HUM" %} Wilgotność poniżej minimum {% elif
+                  row[4] == "HIGH_HUM" %} Wilgotność powyżej maksimum {% elif
+                  row[4] == "LOW_TEMP_AND_LOW_HUM" %} Niska temperatura i
+                  wilgotność {% elif row[4] == "LOW_TEMP_AND_HIGH_HUM" %} Niska
+                  temperatura i wysoka wilgotność {% elif row[4] ==
+                  "HIGH_TEMP_AND_LOW_HUM" %} Wysoka temperatura i niska
+                  wilgotność {% elif row[4] == "HIGH_TEMP_AND_HIGH_HUM" %}
+                  Wysoka temperatura i wilgotność {% else %} Alarm {% endif %}
                 </td>
                 <td>{{ row[5] }}</td>
               </tr>
@@ -55,6 +64,5 @@
         </div>
       </section>
     </main>
-    <script src="/static/app.js"></script>
   </body>
 </html>

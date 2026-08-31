@@ -48,8 +48,8 @@ def init_database():
     INSERT OR IGNORE INTO settings (name, value)
     VALUES
     ('temp_min', 10.0),
-    ('temp_max', 30.0),
-    ('hum_min', 30.0),
+    ('temp_max', 40.0),
+    ('hum_min', 10.0),
     ('hum_max', 70.0)
     """)
 
@@ -200,9 +200,9 @@ def get_system_events_last_24h():
         WHERE created_at >= datetime('now', 'localtime', '-24 hours')
         ORDER BY id DESC
     """
-    device_statuses = connection.execute(sql).fetchall()
+    system_events = connection.execute(sql).fetchall()
     connection.close()
-    return device_statuses
+    return system_events
 
 def get_latest_system_events():
     connection = sqlite3.connect(DATABASE_NAME)
@@ -220,14 +220,19 @@ def get_measurements_for_chart():
     connection = sqlite3.connect(DATABASE_NAME)
 
     sql = """
-        SELECT temperature, humidity, created_at
+        SELECT
+            AVG(temperature) AS avg_temperature,
+            AVG(humidity) AS avg_humidity,
+            strftime('%Y-%m-%d %H:%M', created_at) AS minute
         FROM measurements
-        ORDER BY id DESC
-        LIMIT 60
+        WHERE created_at >= datetime('now', 'localtime', '-24 hours')
+        GROUP BY strftime('%Y-%m-%d %H:%M', created_at)
+        ORDER BY minute ASC
     """
+
     rows = connection.execute(sql).fetchall()
     connection.close()
-    rows = list(reversed(rows))
+
     return rows
 
 def get_all_measurements():
@@ -264,3 +269,16 @@ def get_all_system_events():
     system_events = connection.execute(sql).fetchall()
     connection.close()
     return system_events
+
+def get_last_alarm_state():
+    connection = sqlite3.connect(DATABASE_NAME)
+    row = connection.execute("""
+        SELECT alarm
+        FROM measurements
+        ORDER BY id DESC
+        LIMIT 1
+    """).fetchone()
+    connection.close()
+    if row is None:
+        return False
+    return bool(row[0])

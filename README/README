@@ -1,15 +1,26 @@
-This directory is intended for PlatformIO Test Runner and project tests.
+ESP32 Monitor
 
-Unit Testing is a software testing method by which individual units of
-source code, sets of one or more MCU program modules together with associated
-control data, usage procedures, and operating procedures, are tested to
-determine whether they are fit for use. Unit testing finds problems early
-in the development cycle.
+Projekt przedstawia prototyp systemu monitorowania temperatury i wilgotności z wykorzystaniem ESP32, czujnika DHT22, komunikacji MQTT, serwera Flask oraz bazy SQLite.
 
-More information about PlatformIO Unit Testing:
+Uruchomienie
 
-- https://docs.platformio.org/en/latest/advanced/unit-testing/index.html
+1. Uruchom broker Mosquitto z przygotowanym plikiem konfiguracyjnym.
+2. Przejdź do katalogu server i aktywuj środowisko wirtualne:
 
-WIN:
-& "C:\Program Files\mosquitto\mosquitto.exe" -c "C:\Users\Bartek\Desktop\esp32-monitor\mosquitto.conf" -v
-venv\Scripts\activate
+source venv/bin/activate
+
+3. Uruchom klienta MQTT odpowiedzialnego za odbieranie danych z ESP32 i zapis do bazy:
+
+python mqtt_client.py
+
+4. W drugim terminalu, również w katalogu server, uruchom aplikację Flask:
+
+python app.py
+
+5. Otwórz panel w przeglądarce:
+
+http://127.0.0.1:5001
+
+Przed uruchomieniem należy przygotować pliki secrets.h oraz config.py na podstawie dołączonych plików przykładowych i uzupełnić je o dane sieci Wi-Fi, adres brokera MQTT oraz dane logowania.
+
+Firmware ESP32 należy skompilować i wgrać za pomocą PlatformIO. Po uruchomieniu urządzenie automatycznie łączy się z Wi-Fi i brokerem MQTT, wykonuje pomiary oraz przesyła je do części serwerowej.
