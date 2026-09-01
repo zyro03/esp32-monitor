@@ -47,4 +47,4 @@ setInterval(function () {
   if (active.tagName !== "INPUT") {
     window.location.reload();
   }
-}, 15000);
+}, 30000);
