@@ -24,17 +24,18 @@ void initSensor()
 
 bool readSensor()
 {
-  temperature = dht.readTemperature();
-  humidity = dht.readHumidity();
+    float newTemperature = dht.readTemperature();
+    float newHumidity = dht.readHumidity();
 
-  if (isnan(temperature) || isnan(humidity))
-  {
-    return false;
-  }
-  else
-  {
+    if (isnan(newTemperature) || isnan(newHumidity))
+    {
+        return false;
+    }
+
+    temperature = newTemperature;
+    humidity = newHumidity;
+
     return true;
-  }
 }
 
 bool checkAlarm()

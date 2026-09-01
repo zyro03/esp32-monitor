@@ -8,31 +8,43 @@
 
 float temperature = 0.0;
 float humidity = 0.0;
+
 RTC_DATA_ATTR float tempMin = 10.0;
 RTC_DATA_ATTR float tempMax = 40.0;
 RTC_DATA_ATTR float humMin = 10.0;
 RTC_DATA_ATTR float humMax = 70.0;
+RTC_DATA_ATTR bool wasOnBattery = false;
+
 bool statusScreen = false;
 bool startEventPending = false;
 bool wakeEventPending = false;
 bool alarmWasActive = false;
-RTC_DATA_ATTR bool wasOnBattery = false;
+bool hasValidMeasurement = false;
+
 String powerSource = "main";
 String workMode = "active";
+
 unsigned long lastMeasurementTime = 0;
 const unsigned long measurementInterval = 30000;
+
+unsigned long lastScreenTime = 0;
+const unsigned long screenInterval = 5000;
 
 void setup()
 {
   Serial.begin(115200);
+
   esp_sleep_wakeup_cause_t wakeupCause = esp_sleep_get_wakeup_cause();
+
   if (wakeupCause != ESP_SLEEP_WAKEUP_TIMER)
   {
     startEventPending = true;
   }
+
   if (wakeupCause == ESP_SLEEP_WAKEUP_TIMER)
   {
     Serial.println("[SLEEP] Wake up from timer");
+    wakeEventPending = true;
   }
 
   initDisplay();
@@ -49,129 +61,159 @@ void setup()
   {
     connectMQTT();
   }
-  if (wakeupCause == ESP_SLEEP_WAKEUP_TIMER)
-  {
-    wakeEventPending = true;
-  }
+
+  lastMeasurementTime = millis() - measurementInterval;
 }
 
 void loop()
 {
   updatePowerStatus();
+
   checkWIFI();
+
   if (isWiFiConnected())
   {
     checkMQTT();
   }
+
   processMQTT();
-  if (powerSource == "main")
-{
-    bool currentAlarm = checkAlarm();
-    if (currentAlarm && !alarmWasActive)
-    {
-        alarmON();
-        lcdAlarm();
-        alarmWasActive = true;
-    }
-    else if (!currentAlarm && alarmWasActive)
-    {
-        alarmOFF();
-        lcdMeasurements();
-        alarmWasActive = false;
-    }
-}
-  if (powerSource == "battery")
-  {
-    bool sensorStatus = readSensor();
-    if (sensorStatus && isMQTTConnected())
-    {
-      bool alarmStatus = checkAlarm();
-      publishMeasurements(alarmStatus);
-    }
-    enterDeepSleep();
-  }
+
   if (startEventPending && isMQTTConnected())
   {
     publishSystemEvent(
         "START",
         "ESP32 started");
+
     startEventPending = false;
   }
+
   if (wakeEventPending && isMQTTConnected())
   {
     publishSystemEvent(
         "WAKE_UP",
         "ESP32 woke up from deep sleep");
+
     wakeEventPending = false;
   }
+
   if (powerSource == "main" && wasOnBattery && isMQTTConnected())
   {
     publishSystemEvent(
         "POWER_RESTORED",
         "Main power restored");
+
     publishDeviceStatus();
+
     wasOnBattery = false;
   }
-  if (millis() - lastMeasurementTime >= measurementInterval)
-{
-  lastMeasurementTime = millis();
-  bool sensorStatus = readSensor();
 
-  if (!sensorStatus)
+  if (powerSource == "battery")
   {
-      alarmOFF();
+    bool sensorStatus = readSensor();
+
+    if (sensorStatus)
+    {
+      hasValidMeasurement = true;
 
       if (isMQTTConnected())
       {
-          publishDeviceStatus();
+        bool alarmStatus = checkAlarm();
+        publishMeasurements(alarmStatus);
       }
+    }
+
+    enterDeepSleep();
   }
-  else
+
+  if (millis() - lastMeasurementTime >= measurementInterval)
   {
-    Serial.print("[SENSOR] T=");
-    Serial.print(temperature, 1);
-    Serial.print(" C | H=");
-    Serial.print(humidity, 1);
-    Serial.println(" %");
+    lastMeasurementTime = millis();
 
-    bool alarmStatus = checkAlarm();
-    if (alarmStatus)
-    {
-      Serial.println("[ALARM] ON");
-    }
-    else
-    {
-      Serial.println("[ALARM] OFF");
-    }
+    bool sensorStatus = readSensor();
 
-    if (isMQTTConnected())
+    if (!sensorStatus)
     {
-      publishMeasurements(alarmStatus);
-      publishDeviceStatus();
-    }
-    else
-    {
-      Serial.println("[MQTT] Not connected - measurement skipped");
-    }
-    if (alarmStatus)
-    {
-      alarmON();
-      lcdAlarm();
-    }
-    else
-    {
-      alarmOFF();
-      if (statusScreen)
+      if (isMQTTConnected())
       {
-        lcdStatus();
+        publishDeviceStatus();
+      }
+    }
+    else
+    {
+      hasValidMeasurement = true;
+
+      Serial.print("[SENSOR] T=");
+      Serial.print(temperature, 1);
+      Serial.print(" C | H=");
+      Serial.print(humidity, 1);
+      Serial.println(" %");
+
+      bool alarmStatus = checkAlarm();
+
+      if (alarmStatus)
+      {
+        Serial.println("[ALARM] ON");
       }
       else
       {
-        lcdMeasurements();
+        Serial.println("[ALARM] OFF");
       }
-      statusScreen = !statusScreen;
+
+      if (isMQTTConnected())
+      {
+        publishMeasurements(alarmStatus);
+        publishDeviceStatus();
+      }
+      else
+      {
+        Serial.println("[MQTT] Not connected - measurement skipped");
+      }
     }
   }
-}
+
+  if (powerSource == "main" && hasValidMeasurement)
+  {
+    bool currentAlarm = checkAlarm();
+
+    if (currentAlarm && !alarmWasActive)
+    {
+      alarmON();
+      lcdAlarm();
+      alarmWasActive = true;
+    }
+    else if (!currentAlarm && alarmWasActive)
+    {
+      alarmOFF();
+      lcdMeasurements();
+
+      alarmWasActive = false;
+      statusScreen = true;
+      lastScreenTime = millis();
+    }
+    else if (!currentAlarm)
+    {
+      alarmOFF();
+    }
+  }
+
+  if (powerSource == "main" &&
+      hasValidMeasurement &&
+      !alarmWasActive &&
+      millis() - lastScreenTime >= screenInterval)
+  {
+    lastScreenTime = millis();
+
+    if (statusScreen)
+    {
+      lcdStatus();
+    }
+    else
+    {
+      lcdMeasurements();
+    }
+
+    statusScreen = !statusScreen;
+  }
+
   delay(100);
 }
