@@ -8,10 +8,10 @@
 
 float temperature = 0.0;
 float humidity = 0.0;
-float tempMin = 10.0;
-float tempMax = 40.0;
-float humMin = 10.0;
-float humMax = 70.0;
+RTC_DATA_ATTR float tempMin = 10.0;
+RTC_DATA_ATTR float tempMax = 40.0;
+RTC_DATA_ATTR float humMin = 10.0;
+RTC_DATA_ATTR float humMax = 70.0;
 bool statusScreen = false;
 bool startEventPending = false;
 bool wakeEventPending = false;
@@ -57,6 +57,12 @@ void setup()
 void loop()
 {
   updatePowerStatus();
+  checkWIFI();
+  if (isWiFiConnected())
+  {
+    checkMQTT();
+  }
+  processMQTT();
   if (powerSource == "battery")
   {
     bool sensorStatus = readSensor();
@@ -67,12 +73,6 @@ void loop()
     }
     enterDeepSleep();
   }
-  checkWIFI();
-  if (isWiFiConnected())
-  {
-    checkMQTT();
-  }
-  processMQTT();
   if (startEventPending && isMQTTConnected())
   {
     publishSystemEvent(
