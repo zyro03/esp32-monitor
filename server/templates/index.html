@@ -68,10 +68,10 @@
             <div class="statusitem">
               <span>Wi-Fi</span>
 
-              {% if device_status and device_status[3] == "deep_sleep" %}
-              <strong>Wyłączone - uśpienie</strong>
-              {% elif not device_online %}
+              {% if not device_online %}
               <strong>Brak połączenia</strong>
+              {% elif device_status and device_status[3] == "deep_sleep" %}
+              <strong>Wyłączone - uśpienie</strong>
               {% elif device_status and device_status[4] %}
               <strong>Połączono</strong>
               {% else %}
