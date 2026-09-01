@@ -26,7 +26,11 @@ Projekt można zbudować i wgrać na ESP32 za pomocą PlatformIO.
 
 ### 2. Mosquitto
 
-Utwórz plik haseł brokera MQTT, a następnie ustaw jego ścieżkę w:
+Utwórz plik haseł brokera MQTT:
+
+`mosquitto_passwd -c mosquitto/mosquitto_passwd esp32`
+
+Następnie ustaw jego ścieżkę w:
 
 `mosquitto/mosquitto.conf`
 
@@ -71,6 +75,12 @@ Zainstaluj wymagane biblioteki:
 Uzupełnij konfigurację w pliku:
 
 `server/config.py`
+
+Hash hasła administratora można wygenerować poleceniem:
+
+`python -c "from werkzeug.security import generate_password_hash; print(generate_password_hash('twoje_haslo'))"`
+
+Wygenerowaną wartość należy przypisać do `ADMIN_PASSWORD_HASH` w pliku `server/config.py`.
 
 Następnie uruchom klienta MQTT:
 
