@@ -221,14 +221,25 @@ void handleMqttMessage(char *topic, byte *payload, unsigned int length)
     Serial.println("[MQTT] Missing or invalid configuration");
     return;
   }
-  tempMin = doc["temp_min"];
-  tempMax = doc["temp_max"];
-  humMin = doc["hum_min"];
-  humMax = doc["hum_max"];
+  bool configChanged =
+    tempMin != doc["temp_min"].as<float>() ||
+    tempMax != doc["temp_max"].as<float>() ||
+    humMin != doc["hum_min"].as<float>() ||
+    humMax != doc["hum_max"].as<float>();
+
+tempMin = doc["temp_min"];
+tempMax = doc["temp_max"];
+humMin = doc["hum_min"];
+humMax = doc["hum_max"];
+
+if (configChanged)
+{
   Serial.println("[MQTT] New alarm thresholds");
+
   publishSystemEvent(
     "CONFIG_UPDATED",
     "Alarm thresholds updated");
+}
 }
 
 void initNetwork()

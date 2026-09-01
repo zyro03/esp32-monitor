@@ -1,39 +1,104 @@
 # ESP32 Monitor
 
-Projekt przedstawia prototyp systemu monitorowania temperatury i wilgotności z wykorzystaniem ESP32, czujnika DHT22, komunikacji MQTT, serwera Flask oraz bazy SQLite.
+Projekt przedstawia prototyp systemu bezprzewodowego monitorowania warunków środowiskowych.
+
+## Konfiguracja
+
+Przed uruchomieniem należy utworzyć właściwe pliki konfiguracyjne na podstawie plików przykładowych:
+
+`include/secrets_example.h` -> `include/secrets.h`
+
+`server/config_example.py` -> `server/config.py`
+
+`mosquitto/mosquitto_example.conf` -> `mosquitto/mosquitto.conf`
+
+`mosquitto/mosquitto_passwd_example` -> `mosquitto/mosquitto_passwd`
 
 ## Uruchomienie
 
-1. Przygotuj pliki konfiguracyjne na podstawie plików przykładowych:
+### 1. ESP32
 
-include/secrets_example.h - include/secrets.h
-server/config_example.py - server/config.py
-mosquitto/mosquitto_example.conf - mosquitto/mosquitto.conf
-mosquitto/mosquitto_passwd_example - mosquitto/mosquitto_passwd
+Uzupełnij dane Wi-Fi i MQTT w pliku:
 
-2. Uzupełnij dane Wi-Fi oraz MQTT.
+`include/secrets.h`
 
-3. Uruchom broker Mosquitto.
+Projekt można zbudować i wgrać na ESP32 za pomocą PlatformIO.
+
+### 2. Mosquitto
+
+Utwórz plik haseł brokera MQTT, a następnie ustaw jego ścieżkę w:
+
+`mosquitto/mosquitto.conf`
+
+Przykładowe uruchomienie na Windows:
+
+`& "C:\Program Files\mosquitto\mosquitto.exe" -c "C:\ścieżka\do\esp32-monitor\mosquitto\mosquitto.conf" -v`
+
+Przykładowe uruchomienie na macOS:
+
+`mosquitto -c /ścieżka/do/esp32-monitor/mosquitto/mosquitto.conf -v`
+
+### 3. Serwer Python
+
+Przejdź do katalogu:
+
+`server`
+
+Utwórz środowisko wirtualne:
 
 Windows:
-& "C:\Program Files\mosquitto\mosquitto.exe" -c "C:\ścieżka\do\esp32-monitor\mosquitto\mosquitto.conf" -v
 
-macOS:
-mosquitto -c /ścieżka/do/esp32-monitor/mosquitto/mosquitto.conf -v
+`python -m venv venv`
 
-4. Przejdź do katalogu server i aktywuj środowisko wirtualne.
+macOS/Linux:
+
+`python3 -m venv venv`
+
+Aktywuj środowisko.
 
 Windows:
-.\venv\Scripts\Activate.ps1
 
-macOS:
-source venv/bin/activate
+`.\venv\Scripts\Activate.ps1`
 
-5. Uruchom:
+macOS/Linux:
 
-python mqtt_client.py
-python app.py
+`source venv/bin/activate`
 
-6. Otwórz panel WWW:
+Zainstaluj wymagane biblioteki:
 
-http://127.0.0.1:5001
+`pip install -r requirements.txt`
+
+Uzupełnij konfigurację w pliku:
+
+`server/config.py`
+
+Następnie uruchom klienta MQTT:
+
+`python mqtt_client.py`
+
+W drugim terminalu uruchom aplikację Flask:
+
+`python app.py`
+
+## Panel WWW
+
+Panel jest dostępny pod adresem:
+
+`http://127.0.0.1:5001`
+
+Aplikacja umożliwia między innymi:
+
+- podgląd aktualnej temperatury i wilgotności,
+- sprawdzenie stanu urządzenia,
+- sprawdzenie źródła zasilania,
+- podgląd stanu alarmowego,
+- przeglądanie historii pomiarów,
+- wyświetlanie wykresów,
+- przeglądanie historii alarmów i zdarzeń,
+- zmianę progów alarmowych.
+
+## Bezpieczeństwo konfiguracji
+
+Dane dostępowe do Wi-Fi, MQTT oraz panelu administratora nie są przechowywane bezpośrednio w repozytorium.
+
+Repozytorium zawiera wyłącznie przykładowe pliki konfiguracyjne przeznaczone do utworzenia lokalnej konfiguracji systemu.

@@ -39,21 +39,16 @@ void updatePowerStatus()
   }
 
   if (mainPowerPresent != lastMainPowerState)
+{
+  if (!mainPowerPresent)
   {
-    if (mainPowerPresent)
-    {
-      publishSystemEvent("POWER_RESTORED", "Main power restored");
-      Serial.println("[POWER] Main power restored");
-    }
-    else
-    {
-      publishSystemEvent("POWER_LOSS", "Main power lost");
-      Serial.println("[POWER] Main power lost");
-    }
-
-    publishDeviceStatus();
-    lastMainPowerState = mainPowerPresent;
+    publishSystemEvent("POWER_LOSS", "Main power lost");
+    Serial.println("[POWER] Main power lost");
   }
+
+  publishDeviceStatus();
+  lastMainPowerState = mainPowerPresent;
+}
 }
 
 void enterDeepSleep()
