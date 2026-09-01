@@ -28,7 +28,9 @@
             <div class="statusitem">
               <span>Status urządzenia</span>
 
-              {% if device_online %}
+              {% if device_status and device_status[3] == "deep_sleep" %}
+              <strong class="sleeping">Uśpiony</strong>
+              {% elif device_online %}
               <strong class="online">Online</strong>
               {% else %}
               <strong class="offline">Offline</strong>
@@ -64,7 +66,9 @@
             <div class="statusitem">
               <span>Wi-Fi</span>
 
-              {% if not device_online %}
+              {% if device_status and device_status[3] == "deep_sleep" %}
+              <strong>Wyłączone - uśpienie</strong>
+              {% elif not device_online %}
               <strong>Brak połączenia</strong>
               {% elif device_status and device_status[4] %}
               <strong>Połączono</strong>
@@ -76,7 +80,9 @@
             <div class="statusitem">
               <span>MQTT</span>
 
-              {% if not device_online %}
+              {% if device_status and device_status[3] == "deep_sleep" %}
+              <strong>Wyłączone - uśpienie</strong>
+              {% elif not device_online %}
               <strong>Brak połączenia</strong>
               {% elif device_status and device_status[5] %}
               <strong>Połączono</strong>

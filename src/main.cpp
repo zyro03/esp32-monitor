@@ -41,12 +41,6 @@ void setup()
 
   updatePowerStatus();
 
-  if (powerSource == "battery")
-  {
-    Serial.println("[POWER] Battery detected");
-    enterDeepSleep();
-  }
-
   initNetwork();
   connectWIFI();
 

@@ -4,15 +4,24 @@ Projekt przedstawia prototyp systemu monitorowania temperatury i wilgotności z 
 
 ## Uruchomienie
 
-1. Uruchom broker Mosquitto z plikiem `mosquitto.conf`.
+1. Przygotuj pliki konfiguracyjne na podstawie plików przykładowych:
+
+include/secrets_example.h - include/secrets.h
+server/config_example.py - server/config.py
+mosquitto/mosquitto_example.conf - mosquitto/mosquitto.conf
+mosquitto/mosquitto_passwd_example - mosquitto/mosquitto_passwd
+
+2. Uzupełnij dane Wi-Fi oraz MQTT.
+
+3. Uruchom broker Mosquitto.
 
 Windows:
-& "C:\Program Files\mosquitto\mosquitto.exe" -c "C:\ścieżka\do\esp32-monitor\README\mosquitto.conf" -v
+& "C:\Program Files\mosquitto\mosquitto.exe" -c "C:\ścieżka\do\esp32-monitor\mosquitto\mosquitto.conf" -v
 
 macOS:
-mosquitto -c /ścieżka/do/esp32-monitor/README/mosquitto.conf -v
+mosquitto -c /ścieżka/do/esp32-monitor/mosquitto/mosquitto.conf -v
 
-2. Przejdź do katalogu `server` i aktywuj środowisko wirtualne.
+4. Przejdź do katalogu server i aktywuj środowisko wirtualne.
 
 Windows:
 .\venv\Scripts\Activate.ps1
@@ -20,18 +29,11 @@ Windows:
 macOS:
 source venv/bin/activate
 
-3. Uruchom klienta MQTT:
+5. Uruchom:
 
 python mqtt_client.py
-
-4. W drugim terminalu uruchom aplikację Flask:
-
 python app.py
 
-5. Otwórz panel w przeglądarce:
+6. Otwórz panel WWW:
 
 http://127.0.0.1:5001
-
-Przed uruchomieniem należy przygotować pliki `secrets.h` oraz `config.py` na podstawie dołączonych plików przykładowych i uzupełnić dane sieci Wi-Fi, brokera MQTT oraz dane logowania.
-
-Firmware ESP32 należy skompilować i wgrać za pomocą PlatformIO. Po uruchomieniu urządzenie automatycznie łączy się z Wi-Fi i brokerem MQTT, wykonuje pomiary i przesyła dane do części serwerowej.

@@ -16,3 +16,6 @@ __pycache__/
 *.pyc
 
 .DS_Store
+
+mosqutto/mosquitto.conf
+mosqutto/mosquitto_passwd
