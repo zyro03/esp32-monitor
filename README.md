@@ -1,4 +1,4 @@
-# ESP32 Monitor
+# System bezprzewodowego monitorowania warunków środowiskowych z centralnym serwerem aplikacji webowej
 
 Projekt przedstawia prototyp systemu bezprzewodowego monitorowania warunków środowiskowych.
 
