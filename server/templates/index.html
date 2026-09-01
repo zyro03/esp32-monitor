@@ -28,12 +28,14 @@
             <div class="statusitem">
               <span>Status urządzenia</span>
 
-              {% if device_status and device_status[3] == "deep_sleep" %}
-              <strong class="sleeping">Uśpiony</strong>
-              {% elif device_online %}
-              <strong class="online">Online</strong>
-              {% else %}
+              {% if not device_status %}
+              <strong>Brak danych</strong>
+              {% elif not device_online %}
               <strong class="offline">Offline</strong>
+              {% elif device_status[3] == "deep_sleep" %}
+              <strong class="sleeping">Uśpiony</strong>
+              {% else %}
+              <strong class="online">Online</strong>
               {% endif %}
             </div>
             <div class="statusitem">
