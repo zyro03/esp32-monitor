@@ -15,6 +15,7 @@ RTC_DATA_ATTR float humMax = 70.0;
 bool statusScreen = false;
 bool startEventPending = false;
 bool wakeEventPending = false;
+bool alarmWasActive = false;
 RTC_DATA_ATTR bool wasOnBattery = false;
 String powerSource = "main";
 String workMode = "active";
@@ -63,6 +64,22 @@ void loop()
     checkMQTT();
   }
   processMQTT();
+  if (powerSource == "main")
+{
+    bool currentAlarm = checkAlarm();
+    if (currentAlarm && !alarmWasActive)
+    {
+        alarmON();
+        lcdAlarm();
+        alarmWasActive = true;
+    }
+    else if (!currentAlarm && alarmWasActive)
+    {
+        alarmOFF();
+        lcdMeasurements();
+        alarmWasActive = false;
+    }
+}
   if (powerSource == "battery")
   {
     bool sensorStatus = readSensor();
