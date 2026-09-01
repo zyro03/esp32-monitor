@@ -85,20 +85,3 @@ W drugim terminalu uruchom aplikację Flask:
 Panel jest dostępny pod adresem:
 
 `http://127.0.0.1:5001`
-
-Aplikacja umożliwia między innymi:
-
-- podgląd aktualnej temperatury i wilgotności,
-- sprawdzenie stanu urządzenia,
-- sprawdzenie źródła zasilania,
-- podgląd stanu alarmowego,
-- przeglądanie historii pomiarów,
-- wyświetlanie wykresów,
-- przeglądanie historii alarmów i zdarzeń,
-- zmianę progów alarmowych.
-
-## Bezpieczeństwo konfiguracji
-
-Dane dostępowe do Wi-Fi, MQTT oraz panelu administratora nie są przechowywane bezpośrednio w repozytorium.
-
-Repozytorium zawiera wyłącznie przykładowe pliki konfiguracyjne przeznaczone do utworzenia lokalnej konfiguracji systemu.
