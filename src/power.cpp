@@ -14,18 +14,16 @@ extern bool wasOnBattery;
 extern String powerSource;
 extern String workMode;
 
-
-
 void initPower()
 {
   pinMode(POWER_DETECT_PIN, INPUT);
-  lastMainPowerState = analogRead(POWER_DETECT_PIN) > 1000;
+  lastMainPowerState = true;
 }
 
 void updatePowerStatus()
 {
   int powerValue = analogRead(POWER_DETECT_PIN);
-  bool mainPowerPresent = powerValue > 1000;
+  bool mainPowerPresent = true;
 
   if (mainPowerPresent)
   {
@@ -39,16 +37,16 @@ void updatePowerStatus()
   }
 
   if (mainPowerPresent != lastMainPowerState)
-{
-  if (!mainPowerPresent)
   {
-    publishSystemEvent("POWER_LOSS", "Main power lost");
-    Serial.println("[POWER] Main power lost");
-  }
+    if (!mainPowerPresent)
+    {
+      publishSystemEvent("POWER_LOSS", "Main power lost");
+      Serial.println("[POWER] Main power lost");
+    }
 
-  publishDeviceStatus();
-  lastMainPowerState = mainPowerPresent;
-}
+    publishDeviceStatus();
+    lastMainPowerState = mainPowerPresent;
+  }
 }
 
 void enterDeepSleep()

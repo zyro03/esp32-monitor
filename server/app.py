@@ -31,17 +31,33 @@ def publish_config(temp_min, temp_max, hum_min, hum_max):
         "hum_max": hum_max,
     }
 
+    client = mqtt.Client()
+
     try:
-        client = mqtt.Client()
         client.username_pw_set(MQTT_USERNAME, MQTT_PASSWORD)
         client.connect(MQTT_BROKER, MQTT_PORT)
-        result = client.publish(MQTT_TOPIC_CONFIG, json.dumps(payload), retain=True)
-        result.wait_for_publish()
-        client.disconnect()
-        return True
+        client.loop_start()
+
+        result = client.publish(
+            MQTT_TOPIC_CONFIG,
+            json.dumps(payload),
+            qos=1,
+            retain=True,
+        )
+
+        if result.rc != mqtt.MQTT_ERR_SUCCESS:
+            return False
+
+        result.wait_for_publish(timeout=5.0)
+        return result.is_published()
+
     except Exception as e:
-        print(e)
-        return False    
+        print("[SETTINGS] MQTT publish failed:", e)
+        return False
+
+    finally:
+        client.disconnect()
+        client.loop_stop()
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
