@@ -109,17 +109,24 @@ void loop()
 
   if (powerSource == "battery")
   {
-    bool sensorStatus = readSensor();
+    hasValidMeasurement = readSensor();
 
-    if (sensorStatus)
+    if (hasValidMeasurement)
     {
-      hasValidMeasurement = true;
-
       if (isMQTTConnected())
       {
         bool alarmStatus = checkAlarm();
         publishMeasurements(alarmStatus);
       }
+    }
+    else
+    {
+      Serial.println("[SENSOR] DHT22 measurement failed");
+      lcdSensorError();
+
+      publishSystemEvent(
+          "SENSOR_ERROR",
+          "DHT22 measurement failed");
     }
 
     enterDeepSleep();
@@ -128,19 +135,33 @@ void loop()
   if (millis() - lastMeasurementTime >= measurementInterval)
   {
     lastMeasurementTime = millis();
-
+    bool previousMeasurementValid = hasValidMeasurement;
     bool sensorStatus = readSensor();
+
+    hasValidMeasurement = sensorStatus;
 
     if (!sensorStatus)
     {
+      Serial.println("[SENSOR] DHT22 błąd");
+      lcdSensorError();
+
       if (isMQTTConnected())
       {
+        publishSystemEvent(
+            "SENSOR_ERROR",
+            "DHT22 measurement failed");
+
         publishDeviceStatus();
       }
     }
     else
     {
-      hasValidMeasurement = true;
+      if (!previousMeasurementValid)
+      {
+        lcdMeasurements();
+        statusScreen = true;
+        lastScreenTime = millis();
+      }
 
       Serial.print("[SENSOR] T=");
       Serial.print(temperature, 1);
@@ -175,12 +196,13 @@ void loop()
   {
     bool currentAlarm = checkAlarm();
 
-    if (currentAlarm && !alarmWasActive)
+    if (currentAlarm)
     {
       alarmON();
       lcdAlarm();
       alarmWasActive = true;
     }
+
     else if (!currentAlarm && alarmWasActive)
     {
       alarmOFF();

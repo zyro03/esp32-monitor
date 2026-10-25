@@ -12,6 +12,7 @@ extern float tempMax;
 extern float tempMin;
 extern float humMax;
 extern float humMin;
+extern bool hasValidMeasurement;
 extern String powerSource;
 
 void lcdMeasurements()
@@ -85,8 +86,22 @@ void lcdAlarm()
     }
 }
 
+void lcdSensorError()
+{
+    lcd.setCursor(0, 0);
+    lcd.print("BLAD CZUJNIKA   ");
+
+    lcd.setCursor(0, 1);
+    lcd.print("BRAK POMIARU    ");
+}
+
 void lcdBatterySleep()
 {
+    if (!hasValidMeasurement)
+    {
+        lcdSensorError();
+        return;
+    }
     lcd.clear();
     lcd.setCursor(0, 0);
     lcd.print("ZASILANIE: AKU  ");

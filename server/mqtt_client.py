@@ -26,6 +26,47 @@ def on_connect(client, userdata, flags, rc):
     else:
         print("MQTT connection failed, code:", rc)
 
+def valid_message(topic, data):
+    schemas = {
+        MQTT_TOPIC_DATA: {
+            "device": (str,),
+            "temperature": (int, float),
+            "humidity": (int, float),
+            "alarm": (bool,),
+        },
+        MQTT_TOPIC_EVENT: {
+            "device": (str,),
+            "event_type": (str,),
+        },
+        MQTT_TOPIC_DEVICE_STATUS: {
+            "device": (str,),
+            "power_source": (str,),
+            "work_mode": (str,),
+            "wifi_status": (bool,),
+            "mqtt_status": (bool,),
+        },
+    }
+
+    if topic not in schemas or not isinstance(data, dict):
+        return False
+
+    for field, types in schemas[topic].items():
+        if field not in data or type(data[field]) not in types:
+            return False
+
+    for field in ("alarm_reason", "message"):
+        if field in data and not isinstance(data[field], str):
+            return False
+
+    if topic == MQTT_TOPIC_DATA:
+        if not (-40.0 <= data["temperature"] <= 80.0):
+            return False
+
+        if not (0.0 <= data["humidity"] <= 100.0):
+            return False
+
+    return True
+
 def handle_message(client, userdata, message):
     global last_alarm_state
 
@@ -36,7 +77,11 @@ def handle_message(client, userdata, message):
     except (json.JSONDecodeError, UnicodeDecodeError):
         print("Invalid MQTT message")
         return
-
+    
+    if not valid_message(topic, data):
+        print("Invalid MQTT message structure:", topic)
+        return
+    
     if topic == MQTT_TOPIC_DATA:
         save_measurement(
             data["device"],
