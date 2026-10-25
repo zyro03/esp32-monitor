@@ -17,13 +17,13 @@ extern String workMode;
 void initPower()
 {
   pinMode(POWER_DETECT_PIN, INPUT);
-  lastMainPowerState = true;
+  lastMainPowerState = analogRead(POWER_DETECT_PIN) > 1000;
 }
 
 void updatePowerStatus()
 {
   int powerValue = analogRead(POWER_DETECT_PIN);
-  bool mainPowerPresent = true;
+  bool mainPowerPresent = powerValue > 1000;
 
   if (mainPowerPresent)
   {

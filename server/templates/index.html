@@ -351,8 +351,9 @@
                     Uruchomiono urządzenie {% elif row[1] == "ALARM_ON" %} Alarm
                     został aktywowany {% elif row[1] == "ALARM_OFF" %} Alarm
                     zakończony – parametry wróciły do normy {% elif row[1] ==
-                    "CONFIG_UPDATED" %} Zaktualizowano progi alarmowe{% else %}
-                    {{ row[2] }} {% endif %}
+                    "CONFIG_UPDATED" %} Zaktualizowano progi alarmowe {% elif
+                    row[1] == "SENSOR_ERROR" %} Błąd odczytu danych z czujnika
+                    DHT22 {% else %} {{ row[2] }} {% endif %}
                   </td>
                   <td>{{ row[3][11:16] }}</td>
                 </tr>

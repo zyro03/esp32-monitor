@@ -44,13 +44,14 @@
                   "DEEP_SLEEP_ENTER" %} Urządzenie przechodzi w tryb uśpienia {%
                   elif row[1] == "WAKE_UP" %} Urządzenie wybudziło się z trybu
                   uśpienia {% elif row[1] == "WIFI_CONNECTED" %} Połączono z
-                  siecią Wi-Fi {% elif row[1] == "CONFIG_UPDATED" %}
-                  Zaktualizowano progi alarmowe{% elif row[1] ==
-                  "MQTT_CONNECTED" %} Połączono z brokerem MQTT {% elif row[1]
-                  == "START" %} Uruchomiono urządzenie {% elif row[1] ==
-                  "ALARM_ON" %} Alarm został aktywowany {% elif row[1] ==
-                  "ALARM_OFF" %} Alarm zakończony – parametry wróciły do normy
-                  {% else %} {{ row[2] }} {% endif %}
+                  siecią Wi-Fi {% elif row[1] == "MQTT_CONNECTED" %} Połączono z
+                  brokerem MQTT {% elif row[1] == "START" %} Uruchomiono
+                  urządzenie {% elif row[1] == "ALARM_ON" %} Alarm został
+                  aktywowany {% elif row[1] == "ALARM_OFF" %} Alarm zakończony –
+                  parametry wróciły do normy {% elif row[1] == "CONFIG_UPDATED"
+                  %} Zaktualizowano progi alarmowe {% elif row[1] ==
+                  "SENSOR_ERROR" %} Błąd odczytu danych z czujnika DHT22 {% else
+                  %} {{ row[2] }} {% endif %}
                 </td>
 
                 <td>{{ row[3][11:16] }}</td>

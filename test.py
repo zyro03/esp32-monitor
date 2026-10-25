@@ -1,46 +1,79 @@
-\begin{table}[htbp]
-    \centering
-    \small
-    \caption{Wyniki pięciu prób alarmowych.}
-    \label{tab:testy_alarmow}
-    \setlength{\tabcolsep}{3pt}
-    \renewcommand{\arraystretch}{1.2}
-    \begin{tabular}{
-        @{}c c c c c c
-        p{0.21\textwidth}
-        p{0.20\textwidth}@{}
+#include "power.h"
+#include "alarm.h"
+#include "display.h"
+#include "network.h"
+
+#include <Arduino.h>
+
+#define POWER_DETECT_PIN 33
+#define DEEP_SLEEP_TIME_SECONDS 30
+
+bool lastMainPowerState = true;
+extern bool wasOnBattery;
+
+extern String powerSource;
+extern String workMode;
+
+void initPower()
+{
+  pinMode(POWER_DETECT_PIN, INPUT);
+  lastMainPowerState = true;
+}
+
+void updatePowerStatus()
+{
+  int powerValue = analogRead(POWER_DETECT_PIN);
+  bool mainPowerPresent = true;
+
+  if (mainPowerPresent)
+  {
+    powerSource = "main";
+    workMode = "active";
+  }
+  else
+  {
+    powerSource = "battery";
+    workMode = "active";
+  }
+
+  if (mainPowerPresent != lastMainPowerState)
+  {
+    if (!mainPowerPresent)
+    {
+      publishSystemEvent("POWER_LOSS", "Main power lost");
+      Serial.println("[POWER] Main power lost");
     }
-        \toprule
-        Próba &
-        \shortstack{Pomiar\\[$^\circ$C / \%]} &
-        \shortstack{$T_{\min}$\\[$^\circ$C]} &
-        \shortstack{$T_{\max}$\\[$^\circ$C]} &
-        \shortstack{$H_{\min}$\\[\%]} &
-        \shortstack{$H_{\max}$\\[\%]} &
-        Komunikat LCD &
-        Informacja w panelu \\
-        \midrule
 
-        1 & 24,0 / 46,7 & 25 & 40 & 10 & 90 &
-        \texttt{TEMP ZA NISKA} &
-        Temperatura poniżej minimum \\
+    publishDeviceStatus();
+    lastMainPowerState = mainPowerPresent;
+  }
+}
 
-        2 & 24,5 / 86,7 & 10 & 24 & 10 & 90 &
-        \texttt{TEMP ZA WYSOKA} &
-        Temperatura powyżej maksimum \\
+void enterDeepSleep()
+{
+  wasOnBattery = true;
+  workMode = "deep_sleep";
 
-        3 & 24,3 / 62,6 & 10 & 40 & 65 & 90 &
-        \texttt{WILG ZA NISKA} &
-        Wilgotność poniżej minimum \\
+  publishSystemEvent("DEEP_SLEEP_ENTER", "ESP32 entering deep sleep");
 
-        4 & 25,1 / 65,8 & 10 & 40 & 10 & 65 &
-        \texttt{WILG ZA WYSOKA} &
-        Wilgotność powyżej maksimum \\
+  publishDeviceStatus();
 
-        5 & 24,4 / 64,1 & 25 & 40 & 65 & 90 &
-        \texttt{T:NIS H:NIS} &
-        Niska temperatura i wilgotność \\
+  processMQTT();
+  delay(300);
 
-        \bottomrule
-    \end{tabular}
-\end{table}
+  disconnectMQTTForSleep();
+
+  alarmOFF();
+  lcdBatterySleep();
+  delay(1500);
+  disableDisplay();
+
+  Serial.print("[SLEEP] Entering deep sleep for ");
+  Serial.print(DEEP_SLEEP_TIME_SECONDS);
+  Serial.println(" s");
+  Serial.flush();
+
+  esp_sleep_enable_timer_wakeup(DEEP_SLEEP_TIME_SECONDS * 1000000ULL);
+
+  esp_deep_sleep_start();
+}
