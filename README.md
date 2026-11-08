@@ -4,7 +4,7 @@ Projekt przedstawia prototyp systemu bezprzewodowego monitorowania warunków śr
 
 ## Konfiguracja
 
-Przed uruchomieniem należy utworzyć właściwe pliki konfiguracyjne na podstawie plików przykładowych:
+Przed uruchomieniem należy utworzyć właściwe pliki konfiguracyjne na podstawie przykładowych plików:
 
 `include/secrets_example.h` -> `include/secrets.h`
 
